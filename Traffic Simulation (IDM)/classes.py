@@ -34,14 +34,14 @@ class Vehicle:
     """Vehicle"""
 
     nb_cars = -1
-    def __init__(self,road,T, leader, s0, a = 1, vehicle_type = 0, b = 1.75):
+    def __init__(self,road,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car
         road
         T : desired time headway (security time) [s]
         leader : vehicle ahead
         s0 = minimal distance (bumper-to-bumper) to the leader [m]
         vehicle_type = 0 for a car, 1 for a truck
-        b = comfortable decelearation of the driver, b > 0 [m/s-2]
+        b = comfortable deceleration of the driver, b > 0 [m/s-2]
         """
 
         # We check input paramaters have the expected types
@@ -58,7 +58,9 @@ class Vehicle:
         self.s0 = s0
         self.x = 0 # Abscissa of the vehicle on the road
         self.v = 0 # Speed of the vehicule
+        self.v_old = 0 # Speed of the vehicle at the precedent time instant
         self.a = a # Acceleration
+        self.b = b
 
         if vehicle_type == 0: # It's a car
             self.b_max = 8 # Maximum vehicle deceleration (in case of danger ahead)
@@ -72,28 +74,28 @@ class Vehicle:
         self.delta = 4
 
     def spacing_with_leader(self):
-        if car.leader == None:
+        if self.leader == None:
             return inf
         else :
-            return car.leader.x - car.x
+            return self.leader.x - self.x
 
-    def acceleration(self):
+    def acceleration(self, v):
         """Calculate the acceleration of the vehicule
         s : actual gap [m]
         v : actual speed [m/s]
         vl : actual speed of the leader [m/s]
 
-        a_free : free road behavior
+        a_free : free road behavior (no vehicle ahead)
         a_int : interaction term
         """
-        if leader is not None:
+        if self.leader is not None:
             vl = self.leader.v
         else:
             vl = self.v
 
         s = self.spacing_with_leader()
 
-        a_free = self.a * (1-(vl/self.v0)^self.delta)
-        a_int = - self.a * ( self.s0 + max(0, self.v*self.T + (self.v * (self.v-vl)) / (2**(a*b))) ) /s
+        a_free = self.a * (1-(v/self.v0)**self.delta)
+        a_int = - self.a * ( (self.s0 + v*self.T + max(0,(v * (vl-v)) / (2*(self.a*self.b)**0.5))) /s )**2
 
         return a_free + a_int
