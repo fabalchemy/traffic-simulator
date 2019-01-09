@@ -45,7 +45,6 @@ class Vehicle:
         """
 
         # We check input paramaters have the expected types
-
         if not (type(road) is Road and type(T) in (int,float) and (type(leader) is Vehicle or leader == None)
         and type(s0) in (int,float) and type(a) in (int,float) and type(vehicle_type) is int and type(b) in (int,float)):
             raise TypeError("Types of entered parameters are incorrect")
@@ -74,28 +73,70 @@ class Vehicle:
         self.delta = 4
 
     def spacing_with_leader(self):
+        """Return the spacing between the car and its leader
+        If there no leader, the distance is infinite"""
         if self.leader == None:
             return inf
         else :
             return self.leader.x - self.x
 
-    def acceleration(self, v):
-        """Calculate the acceleration of the vehicule
-        s : actual gap [m]
-        v : actual speed [m/s]
-        vl : actual speed of the leader [m/s]
-
-        a_free : free road behavior (no vehicle ahead)
-        a_int : interaction term
-        """
-        if self.leader is not None:
-            vl = self.leader.v
+    def speed_of_leader(self):
+        """Return the speed of the leader, if it exists
+        Otherwise, return the speed of the car to cancel the interaction acceleration"""
+        if self.leader == None:
+             return self.v
         else:
-            vl = self.v
+            return self.leader.v
 
+    def a_free(self, v):
+        """Return the freeway acceleration (with no car ahead)"""
+        if v <= self.v0:
+            return self.a * (1 - (v/self.v0)**self.delta)
+        else:
+            return -self.b * (1 - (self.v0/v)**(a*self.delta/b))
+
+    def z(self, v):
+        """Acceleration term linked to distance to the leader"""
         s = self.spacing_with_leader()
+        delta_v = self.speed_of_leader() - v
+        return (self.s0 + max(0, self.v * self.T + (self.v * delta_v /(2*(self.a*self.b)**0.5))) )/ max(s, self.s0)
+        # max(s,self.s0) added at the end to avoid going backwards when car is stopped and to near from the leader
 
-        a_free = self.a * (1-(v/self.v0)**self.delta)
-        a_int = - self.a * ( (self.s0 + v*self.T + max(0,(v * (vl-v)) / (2*(self.a*self.b)**0.5))) /s )**2
 
-        return a_free + a_int
+    def acceleration(self, v):
+        """Return the global acceleration"""
+        z = self.z(v)
+        a = self.a
+        a_free = self.a_free(v)
+        if v <= self.v0:
+            if z >= 1:
+                return a * (1 - z**2)
+            else:
+                return a_free * (1 - z**(2*a / a_free))
+
+        else:
+            if z >= 1:
+                return a_free + a * (1 - z**2)
+            else:
+                return a_free
+
+    # def acceleration(self, v): # old
+    #     """Calculate the acceleration of the vehicule
+    #     s : actual gap [m]
+    #     v : actual speed [m/s]
+    #     vl : actual speed of the leader [m/s]
+    #
+    #     a_free : free road behavior (no vehicle ahead)
+    #     a_int : interaction term
+    #     """
+    #     if self.leader is not None:
+    #         vl = self.leader.v
+    #     else:
+    #         vl = self.v
+    #
+    #     s = self.spacing_with_leader()
+    #
+    #     a_free = self.a * (1-(v/self.v0)**self.delta)
+    #     a_int = - self.a * ( (self.s0 + v*self.T + max(0,(v * (vl-v)) / (2*(self.a*self.b)**0.5))) /max(s, self.s0) )**2
+    #
+    #     return a_free + a_int

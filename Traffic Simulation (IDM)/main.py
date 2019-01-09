@@ -13,16 +13,16 @@ def euler(v, acc, dt):
 
 C1 = Cross((0,0), True)
 C2 = Cross((100,0), False)
-R = Road("R", C1, C2, 80/3.6)
-veh1 = Vehicle(road = R, T=.1, leader = None, s0 = 2, a=1)
+R = Road("R", C1, C2, 50/3.6)
+veh1 = Vehicle(road = R, T=1, leader = None, s0 = 2, a=1)
 veh2 = None
 t = 0
-dt = 0.001
-while t < 100:
-    if t > 10 and t<10.2 :
-        veh2 = Vehicle(road = R, T=.1, leader = veh1, s0=2, a=1)
+dt = 0.01
+while t < 50:
+    if t >= 0.5 and t<0.6 :
+        veh2 = Vehicle(road = R, T=1, leader = veh1, s0=2, a=4)
 
-    if t<=10:
+    if t<=0.5:
         veh1.v = RK4(veh1.v, veh1.acceleration, dt)
         veh1.x += (veh1.v + veh1.v_old) / 2 * dt
         veh1.v_old = veh1.v
@@ -34,6 +34,6 @@ while t < 100:
         veh2.v = RK4(veh2.v, veh2.acceleration, dt)
         veh2.x += (veh2.v + veh2.v_old) / 2 * dt
         veh2.v_old = veh2.v
-        print(t, veh1.acceleration(veh1.v), veh1.v, veh1.x, veh2.acceleration(veh2.v), veh2.v, veh2.x)
+        print(t, veh1.acceleration(veh1.v), veh1.v, veh1.x, veh2.acceleration(veh2.v), veh2.v, veh2.x, veh1.x-veh2.x)
 
     t = t + dt
