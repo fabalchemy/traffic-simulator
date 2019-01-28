@@ -33,7 +33,7 @@ class Cross:
 class Vehicle:
     """Vehicle"""
 
-    nb_cars = -1
+    nb_vehicle = 0
     def __init__(self,road,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car
         road
@@ -41,42 +41,46 @@ class Vehicle:
         leader : vehicle ahead
         s0 = minimal distance (bumper-to-bumper) to the leader [m]
         vehicle_type = 0 for a car, 1 for a truck
-        b = comfortable deceleration of the driver, b > 0 [m/s-2]
+        b = comfortable deceleration of the driver, b > 0 [m/s²]
         """
 
         # We check input paramaters have the expected types
         if not (type(road) is Road and type(T) in (int,float) and (type(leader) is Vehicle or leader == None)
         and type(s0) in (int,float) and type(a) in (int,float) and type(vehicle_type) is int and type(b) in (int,float)):
-            raise TypeError("Types of entered parameters are incorrect")
+            raise TypeError("There is a problem with the given parameters")
 
-        Vehicle.nb_cars += 1
-        self.name = Vehicle.nb_cars
-        self.v0 = road.speed_limit # v0 = desired speed (generally the speed limit)
+        # TODO: Be more specific about that problem
+
+        Vehicle.nb_vehicle += 1
+        self.road = road
         self.T = T
-
+        self.leader = leader
         self.s0 = s0
-        self.x = 0 # Abscissa of the vehicle on the road
-        self.v = 0 # Speed of the vehicule
-        self.v_old = 0 # Speed of the vehicle at the precedent time instant
         self.a = a # Acceleration
-        self.b = b
 
         if vehicle_type == 0: # It's a car
             self.b_max = 8 # Maximum vehicle deceleration (in case of danger ahead)
         elif vehicle_type == 1 : # It's a truck
             self.b_max = 4
         else:
-            Vehicle.nb_cars -= 1
+            Vehicle.nb_vehicle -= 1
             raise TypeError("Non existing vehicle. 0 = car, 1 = truck")
 
-        self.leader = leader
+        self.b = b
         self.delta = 4
+
+        # TODO: Implement some variation for v0 speed (pushy or safe driver)
+        self.v0 = road.speed_limit # v0 = desired speed (generally the speed limit)
+
+        self.x = 0 # Position of the vehicle on the road
+        self.v = 0 # Speed of the vehicule
+        self.v_old = 0 # Speed of the vehicle at the precedent time instant
 
     def spacing_with_leader(self):
         """Return the spacing between the car and its leader
-        If there no leader, the distance is infinite"""
+        If there is no leader, the distance is infinite"""
         if self.leader == None:
-            return inf
+            return 1000
         else :
             return self.leader.x - self.x
 
@@ -90,21 +94,26 @@ class Vehicle:
 
     def a_free(self, v):
         """Return the freeway acceleration (with no car ahead)"""
-        if v <= self.v0:
+        if v <= self.v0 :
             return self.a * (1 - (v/self.v0)**self.delta)
         else:
-            return -self.b * (1 - (self.v0/v)**(a*self.delta/b))
+            return -self.b * (1 - (self.v0/v)**(self.a*self.delta/self.b))
 
     def z(self, v):
         """Acceleration term linked to distance to the leader"""
         s = self.spacing_with_leader()
-        delta_v = self.speed_of_leader() - v
-        return (self.s0 + max(0, self.v * self.T + (self.v * delta_v /(2*(self.a*self.b)**0.5))) )/ max(s, self.s0)
-        # max(s,self.s0) added at the end to avoid going backwards when car is stopped and to near from the leader
+        #delta_v = self.speed_of_leader() - v
+        delta_v = v- self.speed_of_leader()
+        return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 
 
-    def acceleration(self, v):
+    def acceleration_IDM(self):
+        return self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2)
+
+
+    def acceleration(self):
         """Return the global acceleration"""
+        v = self.v
         z = self.z(v)
         a = self.a
         a_free = self.a_free(v)
@@ -119,24 +128,3 @@ class Vehicle:
                 return a_free + a * (1 - z**2)
             else:
                 return a_free
-
-    # def acceleration(self, v): # old
-    #     """Calculate the acceleration of the vehicule
-    #     s : actual gap [m]
-    #     v : actual speed [m/s]
-    #     vl : actual speed of the leader [m/s]
-    #
-    #     a_free : free road behavior (no vehicle ahead)
-    #     a_int : interaction term
-    #     """
-    #     if self.leader is not None:
-    #         vl = self.leader.v
-    #     else:
-    #         vl = self.v
-    #
-    #     s = self.spacing_with_leader()
-    #
-    #     a_free = self.a * (1-(v/self.v0)**self.delta)
-    #     a_int = - self.a * ( (self.s0 + v*self.T + max(0,(v * (vl-v)) / (2*(self.a*self.b)**0.5))) /max(s, self.s0) )**2
-    #
-    #     return a_free + a_int

@@ -1,4 +1,6 @@
 from classes import *
+import os
+
 
 def RK4(v, f, dt):
     v1 = f(v)*dt
@@ -11,29 +13,35 @@ def RK4(v, f, dt):
 def euler(v, acc, dt):
     return v + acc(v)*dt
 
+file = open("results.txt", "w")
+
+
 C1 = Cross((0,0), True)
 C2 = Cross((100,0), False)
-R = Road("R", C1, C2, 50/3.6)
-veh1 = Vehicle(road = R, T=1, leader = None, s0 = 2, a=1)
+R = Road("R", C1, C2, 54/3.6)
+veh1 = Vehicle(road = R, T=1, leader = None, s0 = 3, a=2)
 veh2 = None
 t = 0
 dt = 0.01
-while t < 50:
-    if t >= 0.5 and t<0.6 :
-        veh2 = Vehicle(road = R, T=1, leader = veh1, s0=2, a=4)
+while t < 100:
+    if t >= 2 and t<2.1 :
+        veh2 = Vehicle(road = R, T=1, leader = veh1, s0=3, a=2)
 
-    if t<=0.5:
-        veh1.v = RK4(veh1.v, veh1.acceleration, dt)
-        veh1.x += (veh1.v + veh1.v_old) / 2 * dt
-        veh1.v_old = veh1.v
-        print(t, veh1.acceleration(veh1.v), veh1.v, veh1.x)
+    if t<=2:
+        veh1.x = veh1.x + veh1.v * dt + max(0, 0.5 * veh1.acceleration() * dt * dt)
+        veh1.v = max(0, veh1.v + veh1.acceleration()*dt)
+        file.write("{0:.4f}     {1:.4f}     {2:.4f}     {3:.4f}".format(t, veh1.acceleration(), veh1.v, veh1.x) + "\n")
     else:
-        veh1.v = RK4(veh1.v, veh1.acceleration, dt)
-        veh1.x += (veh1.v + veh1.v_old) / 2 * dt
-        veh1.v_old = veh1.v
-        veh2.v = RK4(veh2.v, veh2.acceleration, dt)
-        veh2.x += (veh2.v + veh2.v_old) / 2 * dt
-        veh2.v_old = veh2.v
-        print(t, veh1.acceleration(veh1.v), veh1.v, veh1.x, veh2.acceleration(veh2.v), veh2.v, veh2.x, veh1.x-veh2.x)
+        if t<70:
+            veh1.x = veh1.x + veh1.v * dt + max(0, 0.5 * veh1.acceleration() * dt * dt)
+            veh1.v = max(0, veh1.v + veh1.acceleration()*dt)
+        else:
+            veh1.v = 0
+        veh2.x = veh2.x + veh2.v * dt + max(0, 0.5 * veh2.acceleration() * dt * dt)
+        veh2.v = max(0, veh2.v + veh2.acceleration()*dt)
+        file.write("{:.4f}     {:.4f}     {:.4f}     {:.4f}     {:.4f}     {:.4f}      {:.4f}      {:.4f}"
+            .format(t, veh1.acceleration(), veh1.v, veh1.x, veh2.acceleration(), veh2.v, veh2.x, veh1.x-veh2.x) + "\n")
 
     t = t + dt
+
+file.close()
