@@ -119,12 +119,12 @@ class Vehicle:
         a_free = self.a_free(v)
         if v <= self.v0:
             if z >= 1:
-                return a * (1 - z**2)
+                return max(-self.b_max, a * (1 - z**2))
             else:
-                return a_free * (1 - z**(2*a / a_free))
+                return max(-self.b_max,a_free * (1 - z**(2*a / a_free)))
 
         else:
             if z >= 1:
-                return a_free + a * (1 - z**2)
+                return max(-self.b_max, a_free + a * (1 - z**2))
             else:
-                return a_free
+                return max(-self.b_max,a_free)
