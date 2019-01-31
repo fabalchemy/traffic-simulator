@@ -6,12 +6,18 @@ from math import inf
 class Road:
     """Class modelizing a road between two crosses"""
 
+    notVehicleError = TypeError("The object added to the road must be a Vehicle")
+    notCrossError = TypeError("Input origin_cross is not type Cross")
+
     def __init__(self, name, cross1, cross2, speed_limit):
         self.name = name
         self.cross1 = cross1
         self.cross2 = cross2
         self.lenght = Road.distance(cross1, cross2)
         self.speed_limit = speed_limit
+
+        self.vehicles_list_12 = list()
+        self.vehicles_list_21 = list()
 
     def distance(cross1,cross2):
         """Euclidean distance between two crosses"""
@@ -20,14 +26,85 @@ class Road:
 
         return ((x2-x1)**2 + (y2-y1)**2)**0.5
 
+    def incoming_veh(self,vehicle,origin_cross):
+        """Incoming vehicle on the road from the origin_cross"""
+
+        #input paramaters check :
+        if type(vehicle) is not Vehicle:
+            raise notVehicleError
+        if type(origin_cross) is not Cross: #Does it work for classes heriting from Cross ?
+            raise notCrossError
+        if origin_cross not in [self.cross1,self.cross2]:
+            return ValueError("This road is not linked to the input cross")
+
+        #Then we add the vehicle at the beginning of the road, in the corresponding direction
+        if origin_cross == self.cross1:
+            self.vehicles_list_12 = vehicle + self.vehicles_list_12
+        else:
+            self.vehicles_list_21 = vehicle + self.vehicles_list_21
+
+    def outcoming_veh(self.vehicle, destination_cross):
+        """Outcoming vehicle of the road"""
+
+        #input paramaters check :
+        if type(vehicle) is not Vehicle:
+            raise notVehicleError
+
+        if vehicle in self.vehic
+
+    def __add__(self,vehicle):
+        """To add a vehicle on the road"""
+        if type(vehicle) is not Vehicle:
+            raise notVehicleError
+
+        vehicles_list = vehicle + vehicles_list
+
+    def __radd__(self,vehicle):
+        """Same action in the two ways"""
+        self + vehicle
+
+    def __del__(self):
+        """Delete and return the last vehicle on the road"""
+        if type(vehicle) is not Vehicle:
+            raise notVehicleError
+
+        return vehicles_list.pop()
+
+    def leader(self):
+        """Return the leader"""
+
 class Cross:
     """Class modelizing a cross"""
-    def __init__(self, coords, is_generator = False):
+    def __init__(self, coords, cross_type):
+        """(cartesian) coords : (x,y)
+        cross_type : 'trafficLight', 'generator', 'simpleCross'"""
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and
-        type(coords[1]) in (int,float) and type(is_generator) is bool):
+        type(coords[1]) in (int,float)):
             raise TypeError("Types of entered parameters are incorrect")
+        if cross_type not in ["trafficLight", "generator", "simpleCross"]:
+            raise ValueError("Incorrect cross type")
+
         self.coords = coords
-        self.is_generator = is_generator
+        self.cross_type = cross_type
+
+class TrafficLight(Cross):
+    """Traffic light, a type of cross"""
+
+    def __init__(self, coords, matrix):
+        """Traffic light, defined by:
+        - (x,y) cartesian coordinates
+        - in/out light command matrix"""
+
+        if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and type(coords[1]) in (int,float)):
+            raise TypeError("Input coordinates are incorrect")
+        self.coords = coords
+
+        #Traffic light color = 0 for green, 1 for red
+        self.color = 0
+
+
+
+
 
 
 class Vehicle:
