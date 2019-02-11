@@ -1,7 +1,7 @@
 """Traffic Simulation (IDM)
 Necessary classes for the simulation"""
 
-from math import inf
+from math import inf, acos, cos, sqrt, fabs
 
 class Road:
     """Class modelizing a road between two crosses"""
@@ -17,6 +17,9 @@ class Road:
         self.lenght = Road.distance(cross1, cross2)
         self.speed_limit = speed_limit
 
+        cross1.roads.append(self)
+        cross2.roads.append(self)
+
         self.vehicles_list_12 = list()
         self.vehicles_list_21 = list()
 
@@ -25,7 +28,7 @@ class Road:
         x1,y1 = cross1.coords
         x2,y2 = cross2.coords
 
-        return ((x2-x1)**2 + (y2-y1)**2)**0.5
+        return float(((x2-x1)**2 + (y2-y1)**2)**0.5)
 
     def incoming_veh(self,vehicle,origin_cross):
         """Incoming vehicle on the road from the origin_cross"""
@@ -36,22 +39,27 @@ class Road:
         if type(origin_cross) is not Cross: #Does it work for classes heriting from Cross ?
             raise notCrossError
         if origin_cross not in [self.cross1,self.cross2]:
-            return crossNotOnRoad
+            raise crossNotOnRoad
 
         #Then we add the vehicle at the beginning of the road, in the corresponding direction
         if origin_cross == self.cross1:
-            self.vehicles_list_12 = vehicle + self.vehicles_list_12
+            self.vehicles_list_12 = self.vehicles_list_12.append(vehicle)
         else:
-            self.vehicles_list_21 = vehicle + self.vehicles_list_21
+            self.vehicles_list_21 = self.vehicles_list_21.append(vehicle)
 
-    def outcoming_veh(self.vehicle, destination_cross):
+    def outcoming_veh(self,vehicle, destination_cross):
         """Outcoming vehicle of the road"""
 
         #input paramaters check :
         if type(vehicle) is not Vehicle:
             raise notVehicleError
 
-        if vehicle in self.vehic
+        if vehicle in self.vehicles_list_12:
+            return self.vehicles_list_12.pop(0)
+        elif vehicle in self.vehicles_list_21:
+            return self.vehicles_list_21.pop(0)
+        else:
+            raise ValueError("Vehicle not on this road")
 
 
 
@@ -115,6 +123,33 @@ class Cross:
 
         self.cross_dispatch_matrix = cross_dispatch_matrix
 
+        self.roads = list()
+
+        def sort_linked_roads(self):
+            """Sort the roads from the 1st by their angle around the cross
+            By computing scalar and vectorial products"""
+
+            vector_list = list()
+            for road in self.roads:
+                sense = 1
+                if road.cross2 == self:
+                    sense = -1
+                vector_list = (road, sense*(road.cross2.coords[0] - self.coords[0]), sense*(road.cross2.coords[1] - self.coords[1]))
+
+            angle_list = list()
+            for (road,x,y) in vector_list:
+                angle_list.append((angle(angle_list[0][1],angle_list[0][2], x,y)), road)
+
+            sort(angle_list)
+
+            return [x[1] for x in angle_list]
+
+
+        def angle(x1,y1,x2,y2):
+            return acos((x1*x2 + y1*y2)/ (sqrt(x1*x1 + y1*y1) * sqrt(x2*x2 + y2*y2))) * -(x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
+            #minus put because of the reversed sense of y-axis on Tkinter
+
+
 
 
 class TrafficLight(Cross):
@@ -140,6 +175,7 @@ class TrafficLight(Cross):
 class Vehicle:
     """Vehicle"""
 
+    map_veh_list = list()
     def __init__(self,road,origin_cross,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car:
         road
@@ -180,6 +216,8 @@ class Vehicle:
         self.x = 0 # Position of the vehicle on the road
         self.v = 0 # Speed of the vehicule
         self.v_old = 0 # Speed of the vehicle at the precedent time instant
+
+        map_veh_list += self
 
     def spacing_with_leader(self):
         """Return the spacing between the car and its leader
