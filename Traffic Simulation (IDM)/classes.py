@@ -144,11 +144,19 @@ class Cross:
 
             return [x[1] for x in angle_list]
 
-
         def angle(x1,y1,x2,y2):
             return acos((x1*x2 + y1*y2)/ (sqrt(x1*x1 + y1*y1) * sqrt(x2*x2 + y2*y2))) * -(x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
             #minus put because of the reversed sense of y-axis on Tkinter
 
+        def define_priority_axis(self, axis):
+            """Define the priority axis of this cross"""
+            AxisError = TypeError("axis must be a tuple of 2 roads")
+            if (type(axis) is not tuple):
+                raise AxisError
+            if len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road):
+                raise AxisError
+
+            self.priority_axis = axis
 
 
 
@@ -168,14 +176,10 @@ class TrafficLight(Cross):
         self.color = 0
 
 
-
-
-
-
 class Vehicle:
     """Vehicle"""
 
-    map_veh_list = list()
+    map_veh_list = list() #List of real vehicles (SlowDownAtCross and TrafficLight are not counted in)
     def __init__(self,road,origin_cross,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car:
         road
@@ -218,6 +222,12 @@ class Vehicle:
         self.v_old = 0 # Speed of the vehicle at the precedent time instant
 
         map_veh_list += self
+
+    def change_leader(self, vehicle):
+        """To change the leader of a vehicle, from outside the class"""
+        if type(vehicle) is not Vehicle:
+            raise TypeError("Input vehicle is not type Vehicle")
+        self.leader = vehicle
 
     def spacing_with_leader(self):
         """Return the spacing between the car and its leader
@@ -271,3 +281,25 @@ class Vehicle:
                 return max(-self.b_max, a_free + a * (1 - z**2))
             else:
                 return max(-self.b_max,a_free)
+
+class SlowDownAtCross(Vehicle): # To rename
+    """We use a stopped or slow vehicle to slow down the vehicle arriving to a cross and quitting the priority axis (and then turning)
+    We use a stopped vehicle to stop the vehicle arriving to a cross, because it doesn't have the required space to cross the road
+    We use a slow vehicle (or stopped further away) to slow down the vehicle going to cross the road, because it cannot turn the corner at a full speed"""
+
+    """Warning : think a way to delete the object when it is no more useful"""
+
+    def __init__(self, road, cross):
+
+        if type(road) is not Road:
+            raise TypeError("road is not type Road")
+        self.road = road
+
+        if type(cross) not in (Cross, TrafficLight, SimpleCross):
+            raise TypeError("cross mus be a Cross (TrafficLight, SimpleCross)")
+
+        change_leader(road.leader(cross), self) # If cross is not linked to the road, an exception is thrown by Road.leader()
+
+        #To stop a vehicle if it cannot cross the road because of a vehicle arriving in the other way
+        self.x = lenght(road) + 2
+        self.v = 0

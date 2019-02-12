@@ -1,4 +1,9 @@
+# coding = Latin-1
+
 from classes import *
+from map import *
+from start_simulation import *
+
 import os
 
 
