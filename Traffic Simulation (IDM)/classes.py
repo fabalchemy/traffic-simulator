@@ -3,12 +3,15 @@ Necessary classes for the simulation"""
 
 from math import inf, acos, cos, sqrt, fabs
 
+# Often used Exceptions :
+NotRoadError = TypeError("Input road is not Road type")
+NotVehicleError = TypeError("Input vehicle is not Vehicle type")
+NotCrossError = TypeError("Input cross is not Cross type")
+NotLinkedRoad = ValueError("Input road is not linked to this cross")
+NotLinkedCross = ValueError("Input cross is not linked to this road")
+
 class Road:
     """Class modelizing a road between two crosses"""
-
-    notVehicleError = TypeError("The object added to the road must be a Vehicle")
-    notCrossError = TypeError("Input cross is not type Cross")
-    crossNotOnRoad = ValueError("This road is not linked to the input cross")
 
     def __init__(self, name, cross1, cross2, speed_limit):
         self.name = name
@@ -20,8 +23,8 @@ class Road:
         cross1.roads.append(self)
         cross2.roads.append(self)
 
-        self.vehicles_list_12 = list()
-        self.vehicles_list_21 = list()
+        self.vehicle_list_12 = list()
+        self.vehicle_list_21 = list()
 
     def distance(cross1,cross2):
         """Euclidean distance between two crosses"""
@@ -30,8 +33,9 @@ class Road:
 
         return float(((x2-x1)**2 + (y2-y1)**2)**0.5)
 
-    def incoming_veh(self,vehicle,origin_cross):
-        """Incoming vehicle on the road from the origin_cross"""
+    def incoming_veh(self,vehicle,origin_cross,x = 0):
+        """Incoming vehicle on the road from the origin_cross
+        x = the abscissa on this road when arriving (useful when vehicles arrive from another road with a certain speed)"""
 
         #input paramaters check :
         if type(vehicle) is not Vehicle:
@@ -39,29 +43,30 @@ class Road:
         if type(origin_cross) is not Cross: #Does it work for classes heriting from Cross ?
             raise notCrossError
         if origin_cross not in [self.cross1,self.cross2]:
-            raise crossNotOnRoad
+            raise NotLinkedCross
+        if x > self.lenght:
+            raise ValueError("Incoming abscissa is too high")
 
         #Then we add the vehicle at the beginning of the road, in the corresponding direction
         if origin_cross == self.cross1:
-            self.vehicles_list_12 = self.vehicles_list_12.append(vehicle)
+            self.vehicle_list_12 = self.vehicle_list_12.append(vehicle)
         else:
-            self.vehicles_list_21 = self.vehicles_list_21.append(vehicle)
+            self.vehicle_list_21 = self.vehicle_list_21.append(vehicle)
 
-    def outcoming_veh(self,vehicle, destination_cross):
-        """Outcoming vehicle of the road"""
+        vehicle.x = x
+
+    def outgoing_veh(self,vehicle, destination_cross):
+        """Outgoing vehicle of the road"""
 
         #input paramaters check :
         if type(vehicle) is not Vehicle:
             raise notVehicleError
-
-        if vehicle in self.vehicles_list_12:
-            return self.vehicles_list_12.pop(0)
-        elif vehicle in self.vehicles_list_21:
-            return self.vehicles_list_21.pop(0)
+        if vehicle in self.vehicle_list_12:
+            destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.x - self.lenght)
+        elif vehicle in self.vehicle_list_21:
+            return destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.x - self.lenght)
         else:
             raise ValueError("Vehicle not on this road")
-
-
 
     def leader(self,destination_cross):
         """Return the first vehicle to arrive on the destination cross by this road"""
@@ -73,15 +78,14 @@ class Road:
             raise crossNotOnRoad
 
         if destination_cross is self.cross1: # return the first vehicle arriving to the destination cross from this road
-            return self.vehicles_list_21[-1]
+            return self.vehicle_list_21[-1]
         else:
-            return self.vehicles_list_12[-1]
+            return self.vehicle_list_12[-1]
 
 class Cross:
     """Class modelizing a cross"""
-    def __init__(self, coords, cross_type, cross_dispatch_matrix = list()):
+    def __init__(self, coords, cross_dispatch_matrix = list()):
         """(cartesian) coords : (x,y)
-        cross_type : ['trafficLight', 'generator', 'simpleCross']
         cross_dispatch_matrix : list of lists of vehicles dispatch on other roads
             (L[x] = entry, L[x][y] exit)"""
 
@@ -92,13 +96,6 @@ class Cross:
         if cross_type not in ["trafficLight", "generator", "simpleCross"]:
             raise ValueError("Incorrect cross type")
         self.coords = coords
-
-        # Check cross_type
-        if type(cross_type) is not str:
-            raise TypeError("String type expected for cross_type")
-        if cross_type not in ['trafficLight', 'generator', 'simpleCross']:
-            raise ValueError("Input cross_type is invalid")
-        self.cross_type = cross_type
 
         # Check cross_dispatch_matrix
         if type(cross_dispatch_matrix) is not list:
@@ -117,13 +114,19 @@ class Cross:
             if cross_dispatch_matrix[road][road] != 0:
                 raise ValueError("Vehicles cannot turn back at a cross. This involves cross_dispatch_matrix[road i][road i] must be 0 for every road.")
 
-
-
-
-
         self.cross_dispatch_matrix = cross_dispatch_matrix
 
         self.roads = list()
+
+        def input_road(self,road):
+            """Add the new road connected to the cross to self.roads"""
+            if type(road) is not Road:
+                raise NotRoadError
+
+            if len(self.roads) >= 4:
+                print("Cannot add a new road on this cross, crosses cannot be linked with more than 4 roads")
+            else:
+                self.roads.append(road)
 
         def sort_linked_roads(self):
             """Sort the roads from the 1st by their angle around the cross
@@ -152,11 +155,20 @@ class Cross:
             """Define the priority axis of this cross"""
             AxisError = TypeError("axis must be a tuple of 2 roads")
             if (type(axis) is not tuple):
-                raise AxisError
+                raise TypeError("Input axis is not a tuple")
             if len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road):
-                raise AxisError
+                raise ValueError("Input axis must be a tuple of 2 roads")
 
             self.priority_axis = axis
+
+        def transfer_vehicle(self,vehicle,x):
+            """Pick up the vehicle from the road to put it at the beginning of the next road"""
+            if type(vehicle) is not Vehicle:
+                raise NotVehicleError
+            if road not in self.roads:
+                raise NotLinkedRoad
+
+            road.incoming_veh(x)
 
 
 
@@ -169,7 +181,7 @@ class TrafficLight(Cross):
         - in/out light command matrix"""
 
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and type(coords[1]) in (int,float)):
-            raise TypeError("Input coordinates are incorrect")
+            raise TypeError("Input coordinates are incorrect (expected (x,y))")
         self.coords = coords
 
         #Traffic light color = 0 for green, 1 for red
@@ -192,9 +204,21 @@ class Vehicle:
         """
 
         # We check input paramaters have the expected types
-        if not (type(road) is Road and type(T) in (int,float) and (type(leader) is Vehicle or leader == None)
-        and type(s0) in (int,float) and type(a) in (int,float) and type(vehicle_type) is int and type(b) in (int,float)):
-            raise TypeError("There is a problem with the given parameters")
+        if type(road) is not Road:
+            raise NotRoadError
+        if type(T) not in (int,float):
+            raise TypeError("Input T is not int/float type")
+        if not (type(leader) is Vehicle or leader == None):
+            raise TypeError("Input leader is not Vehicle/None type")
+        if type(s0) not in (int,float):
+            raise TypeError("Input s0 is not int/float")
+        if type(a) not in (int,float):
+            raise TypeError("Input a is not int/float")
+        if type(vehicle_type) is not int:
+            raise TypeError("Input vehicle_type is not int")
+        if type(b) not in (int,float):
+            raise TypeError("Input b is not int/float")
+
 
         # TODO: Be more specific about that problem
 
@@ -226,7 +250,7 @@ class Vehicle:
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
         if type(vehicle) is not Vehicle:
-            raise TypeError("Input vehicle is not type Vehicle")
+            raise NotVehicleError
         self.leader = vehicle
 
     def spacing_with_leader(self):
@@ -292,11 +316,11 @@ class SlowDownAtCross(Vehicle): # To rename
     def __init__(self, road, cross):
 
         if type(road) is not Road:
-            raise TypeError("road is not type Road")
+            raise NotRoadError
         self.road = road
 
         if type(cross) not in (Cross, TrafficLight, SimpleCross):
-            raise TypeError("cross mus be a Cross (TrafficLight, SimpleCross)")
+            raise TypeError("cross must be a Cross (TrafficLight, SimpleCross)")
 
         change_leader(road.leader(cross), self) # If cross is not linked to the road, an exception is thrown by Road.leader()
 
