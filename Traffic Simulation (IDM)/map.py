@@ -1,4 +1,4 @@
-# coding = Latin-1
+# coding = utf-8
 
 cross_list = [] # Here : add the crosses wanted to generate a map
 

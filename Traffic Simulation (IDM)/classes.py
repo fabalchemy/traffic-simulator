@@ -1,3 +1,5 @@
+# coding = utf-8
+
 """Traffic Simulation (IDM)
 Necessary classes for the simulation"""
 
@@ -93,8 +95,6 @@ class Cross:
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and
         type(coords[1]) in (int,float)):
             raise TypeError("Types of entered parameters are incorrect")
-        if cross_type not in ["trafficLight", "generator", "simpleCross"]:
-            raise ValueError("Incorrect cross type")
         self.coords = coords
 
         # Check cross_dispatch_matrix
@@ -111,10 +111,10 @@ class Cross:
 
             # By our own choice, cars cannot turn back when arriving to a cross
             # This involves for all incoming road, cross_dispatch_matrix[i][i] must equal 0
-            if cross_dispatch_matrix[road][road] != 0:
+        """    if cross_dispatch_matrix[road][road] != 0:
                 raise ValueError("Vehicles cannot turn back at a cross. This involves cross_dispatch_matrix[road i][road i] must be 0 for every road.")
 
-        self.cross_dispatch_matrix = cross_dispatch_matrix
+        self.cross_dispatch_matrix = cross_dispatch_matrix"""
 
         self.roads = list()
 
@@ -191,7 +191,6 @@ class TrafficLight(Cross):
 class Vehicle:
     """Vehicle"""
 
-    map_veh_list = list() #List of real vehicles (SlowDownAtCross and TrafficLight are not counted in)
     def __init__(self,road,origin_cross,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car:
         road
@@ -245,7 +244,6 @@ class Vehicle:
         self.v = 0 # Speed of the vehicule
         self.v_old = 0 # Speed of the vehicle at the precedent time instant
 
-        map_veh_list += self
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
@@ -298,7 +296,7 @@ class Vehicle:
             if z >= 1:
                 return max(-self.b_max, a * (1 - z**2))
             else:
-                return max(-self.b_max,a_free * (1 - z**(2*a / a_free)))
+                return max(-self.b_max, a_free * (1 - z**(2*a / a_free)))
 
         else:
             if z >= 1:

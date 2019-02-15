@@ -1,4 +1,4 @@
-# coding = Latin-1
+# coding = utf-8
 
 def start_simulation ():
     """Function starting the simulation, by generating the map, ... to complete"""
