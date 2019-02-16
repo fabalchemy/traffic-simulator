@@ -10,7 +10,7 @@ file = open("results.txt", "w")
 
 C1 = Cross((0,0))
 C2 = Cross((100,0))
-R = Road("R", C1, C2, 54/3.6)
+R = Road(C1, C2, 54/3.6)
 veh1 = Vehicle(road = R, origin_cross = C1,T=1, leader = None, s0 = 3, a=2)
 veh2 = None
 t = 0

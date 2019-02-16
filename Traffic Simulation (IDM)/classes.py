@@ -15,8 +15,7 @@ NotLinkedCross = ValueError("Input cross is not linked to this road")
 class Road:
     """Class modelizing a road between two crosses"""
 
-    def __init__(self, name, cross1, cross2, speed_limit):
-        self.name = name
+    def __init__(self, cross1, cross2, speed_limit):
         self.cross1 = cross1
         self.cross2 = cross2
         self.lenght = Road.distance(cross1, cross2)

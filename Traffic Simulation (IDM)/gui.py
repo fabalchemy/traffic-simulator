@@ -1,6 +1,6 @@
 import tkinter as tk
 
-W, H = 1000,1000
+W, H = 300, 300
 marge = 5000
 
 class Map(tk.Frame):
@@ -64,23 +64,34 @@ class Map(tk.Frame):
 # DEBUG: Fonctions pour tester le comportement
 import random
 def clavier(event):
+    global car_angle, a
     if event.char == "w":
         map.zoom(event)
     e = map.current_scale
-    if event.char == "z":
-        map.canvas.move("car", 0, -5*e)
-    if event.char == "q":
-        map.canvas.move("car", -5*e, 0)
-    if event.char == "s":
-        map.canvas.move("car", 0, 5*e)
-    if event.char == "d":
-        map.canvas.move("car", 5*e, 0)
+    if event.char == "z": #haut
+        map.canvas.move("car", 5*e*cos(car_angle), -5*e*sin(car_angle))
+    if event.char == "s": #bas
+        map.canvas.move("car", -5*e*cos(car_angle), 5*e*sin(car_angle))
+    if event.char == "q": #gauche
+        map.canvas.move("car", -5*e*sin(car_angle), -5*e*cos(car_angle))
+    if event.char == "d": #droite
+        map.canvas.move("car", 5*e*sin(car_angle), 5*e*cos(car_angle))
+
+    if event.char == "x":
+        car_angle = 2*3.1415/random.randint(1, 10)
+        dx = sin(car_angle)*w/2
+        dy = cos(car_angle)*w/2
+        dxb = l*cos(car_angle)
+        dyb = l*sin(car_angle)
+        print(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
+        map.canvas.coords(a, x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
+
 
     if event.char == " ":
         e = map.current_scale
         for n in range(50):
-            x0 = random.randint(0, 900) * e
-            y0 = random.randint(50, 900) * e
+            x0 = random.randint(0, W-10) * e
+            y0 = random.randint(0, H-10) * e
             x1 = x0 + random.randint(50, 100) * e
             y1 = y0 + random.randint(50,100) * e
             color = ("red", "orange", "yellow", "green", "blue")[random.randint(0,4)]
@@ -96,7 +107,20 @@ if __name__ == "__main__":
     map.pack(fill="both", expand=True)
 
     # DEBUG: Test pour afficher une voiture
-    map.canvas.create_rectangle(10, 10, 10+5, 10+2, fill = "red", tag="car")
+    # map.canvas.create_rectangle(10, 10, 10+5, 10+2, fill = "red", tag="car")
+
+    car_pos = (x,y) = (15,20)
+    car_angle = 3.1415/6 #rad
+    car_geom = (l, w) = (30, 10)
+
+    from math import cos, sin
+
+    dx = sin(car_angle)*w/2
+    dy = cos(car_angle)*w/2
+    dxb = l*cos(car_angle)
+    dyb = l*sin(car_angle)
+    a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
+
 
     # Event-listeners
     root.bind("<MouseWheel>", map.zoom)
