@@ -4,6 +4,7 @@
 Necessary classes for the simulation"""
 
 from math import inf, acos, cos, sqrt, fabs
+from random import random
 
 # Often used Exceptions :
 NotRoadError = TypeError("Input road is not Road type")
@@ -16,10 +17,17 @@ class Road:
     """Class modelizing a road between two crosses"""
 
     def __init__(self, cross1, cross2, speed_limit):
+        if type(cross1) not in [Cross, TrafficLight, GeneratorCross]:
+            raise NotCrossError
         self.cross1 = cross1
+        if type(cross2) not in [Cross, TrafficLight, GeneratorCross]:
+            raise NotCrossError
         self.cross2 = cross2
-        self.lenght = Road.distance(cross1, cross2)
+        if type(speed_limit) not in (int,float):
+            raise TypeError("speed_limit is not int/float")
         self.speed_limit = speed_limit
+
+        self.lenght = Road.distance(cross1, cross2)
 
         cross1.roads.append(self)
         cross2.roads.append(self)
@@ -90,10 +98,10 @@ class Cross:
         cross_dispatch_matrix : list of lists of vehicles dispatch on other roads
             (L[x] = entry, L[x][y] exit)"""
 
-        # Check valid coords
+        # Check coords
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and
         type(coords[1]) in (int,float)):
-            raise TypeError("Types of entered parameters are incorrect")
+            raise TypeError("coords must be a (x,y) tuple")
         self.coords = coords
 
         # Check cross_dispatch_matrix
@@ -109,7 +117,7 @@ class Cross:
                 raise ValueError("cross_dispatch_matrix must have the same number of incoming and outgoing roads")
 
             # By our own choice, cars cannot turn back when arriving to a cross
-            # This involves for all incoming road, cross_dispatch_matrix[i][i] must equal 0
+            # This involves for all incoming road that cross_dispatch_matrix[i][i] must equal 0
         """    if cross_dispatch_matrix[road][road] != 0:
                 raise ValueError("Vehicles cannot turn back at a cross. This involves cross_dispatch_matrix[road i][road i] must be 0 for every road.")
 
@@ -129,7 +137,8 @@ class Cross:
 
         def sort_linked_roads(self):
             """Sort the roads from the 1st by their angle around the cross
-            By computing scalar and vectorial products"""
+            by computing scalar and vectorial products
+            Then sort the roads to have the priority_axis on indexes 1, 3 in the list"""
 
             vector_list = list()
             for road in self.roads:
@@ -144,7 +153,12 @@ class Cross:
 
             sort(angle_list)
 
-            return [x[1] for x in angle_list]
+            self.roads = [x[1] for x in angle_list]
+
+            define_priority_axis(self,axis)
+            if len(self.roads) > 2: # For 3 and 4-road crosses
+                while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
+                    self.roads.append(self.roads.pop(0))
 
         def angle(x1,y1,x2,y2):
             return acos((x1*x2 + y1*y2)/ (sqrt(x1*x1 + y1*y1) * sqrt(x2*x2 + y2*y2))) * -(x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
@@ -169,6 +183,22 @@ class Cross:
 
             road.incoming_veh(x)
 
+        def choose_direction(self, origin_road):
+            """Return the next road for a vehicle arriving on the cross
+            Use the probability to go on each road (cross_dispatch_matrix)"""
+
+            if type(origin_road) is not Road:
+                raise NotRoadError
+            if origin_road not in self.roads:
+                raise NotLinkedRoad
+
+            proba = random()
+            for j in range(len(self.roads)):
+                if proba <= self.cross_dispatch_matrix[self.roads.index(origin_road)][j]:
+                    return self.roads[j]
+
+            raise ValueError("Cannot return the next road")
+
 
 
 class TrafficLight(Cross):
@@ -186,6 +216,19 @@ class TrafficLight(Cross):
         #Traffic light color = 0 for green, 1 for red
         self.color = 0
 
+
+class GeneratorCross(Cross):
+    """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
+
+    def __init__(self,coords,frequency):
+        """coords : (x,y) coordinates
+        frequency [s] : time between two vehicle income"""
+
+        if type(frequency) not in (int,float):
+            raise TypeError("frequency is not int/float")
+        self.frequency = frequency
+
+        #to complete
 
 class Vehicle:
     """Vehicle"""
