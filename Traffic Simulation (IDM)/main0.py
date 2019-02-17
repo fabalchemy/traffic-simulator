@@ -1,6 +1,7 @@
 # coding = utf-8
 from classes import *
 
+import decimal
 import os
 file = open("results_new_ver.txt", "w")
 
@@ -14,8 +15,10 @@ road_list.append(Road(C[0], C[1], 54/3.6))
 vehicle_list = V = []
 vehicle_list.append(Vehicle(R[0], C[0], T=1, leader = None, s0 = 3, a =2))
 
-t = 0
-dt = 0.01
+decimal.getcontext().prec = 3
+t = decimal.Decimal(0)
+dtd = decimal.Decimal(1)/decimal.Decimal(10)
+dt = float(dtd)
 
 while t < 100:
     for veh in vehicle_list:
@@ -29,12 +32,12 @@ while t < 100:
                     .format(V.index(veh), t, a, veh.v, veh.x, veh.spacing_with_leader()) + "\n")
 
     # apparition d'une voiture à 2 secondes
-    if t >= 2 and t<2.1 :
+    if t == 2 :
         vehicle_list.append(Vehicle(R[0], C[0], T=1, leader = V[0], s0=3, a=2))
 
-    if t>=70 and t<70.1 :
+    if t==70 :
         V[0].v0 = 30/3.6
 
-    t = t + dt
+    t+= dtd
 
 file.close()
