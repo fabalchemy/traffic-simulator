@@ -1,9 +1,9 @@
 import tkinter as tk
 
-W, H = 300, 300
+W, H = 1000, 700
 marge = 5000
 
-class Map(tk.Frame):
+class ScrollableFrame(tk.Frame):
     def __init__(self, root):
         # Initialize a Frame
         tk.Frame.__init__(self, root)
@@ -86,23 +86,11 @@ def clavier(event):
         print(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
         map.canvas.coords(a, x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
 
-
-    if event.char == " ":
-        e = map.current_scale
-        for n in range(50):
-            x0 = random.randint(0, W-10) * e
-            y0 = random.randint(0, H-10) * e
-            x1 = x0 + random.randint(50, 100) * e
-            y1 = y0 + random.randint(50,100) * e
-            color = ("red", "orange", "yellow", "green", "blue")[random.randint(0,4)]
-            map.canvas.create_rectangle(x0,y0,x1,y1, outline="black", fill=color)
-
-
 if __name__ == "__main__":
     # Create a window
     root = tk.Tk()
     # Create a map to display
-    map = Map(root)
+    map = ScrollableFrame(root)
     # Put it inside the window
     map.pack(fill="both", expand=True)
 
@@ -119,7 +107,8 @@ if __name__ == "__main__":
     dy = cos(car_angle)*w/2
     dxb = l*cos(car_angle)
     dyb = l*sin(car_angle)
-    a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
+    can = map.canvas
+    a = can.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
 
 
     # Event-listeners
