@@ -125,81 +125,79 @@ class Cross:
 
         self.roads = list()
 
-    def input_road(self,road):
-        """Add the new road connected to the cross to self.roads"""
-        if type(road) is not Road:
-            raise NotRoadError
+        def input_road(self,road):
+            """Add the new road connected to the cross to self.roads"""
+            if type(road) is not Road:
+                raise NotRoadError
 
-        if len(self.roads) >= 4:
-            print("Cannot add a new road on this cross, crosses cannot be linked with more than 4 roads")
-        else:
-            self.roads.append(road)
+            if len(self.roads) >= 4:
+                print("Cannot add a new road on this cross, crosses cannot be linked with more than 4 roads")
+            else:
+                self.roads.append(road)
 
-    def define_priority_axis(self, axis):
-        """Define the priority axis of this cross"""
-        AxisError = TypeError("axis must be a tuple of 2 roads")
-        if (type(axis) is not tuple):
-            raise TypeError("Input axis is not a tuple")
-        if len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road):
-            raise ValueError("Input axis must be a tuple of 2 roads")
+        def sort_linked_roads(self):
+            """Sort the roads from the 1st by their angle around the cross
+            by computing scalar and vectorial products
+            Then sort the roads to have the priority_axis on indexes 1, 3 in the list"""
 
-        self.priority_axis = axis
+            vector_list = list()
+            for road in self.roads:
+                sense = 1
+                if road.cross2 == self:
+                    sense = -1
+                vector_list = (road, sense*(road.cross2.coords[0] - self.coords[0]), sense*(road.cross2.coords[1] - self.coords[1]))
 
-    def sort_linked_roads(self):
-        """Sort the roads from the 1st by their angle around the cross
-        Then sort the roads to have the priority_axis on indexes 1, 3 in the list"""
+            angle_list = list()
+            for (road,x,y) in vector_list:
+                angle_list.append((angle(angle_list[0][1],angle_list[0][2], x,y)), road)
 
-        vector_list = list()
-        for road in self.roads:
-            if road.cross1 == self:
-                vector_list.append((road, road.cross2.coords[0] - self.coords[0], road.cross2.coords[1] - self.coords[1]))
-            else :
-                vector_list.append((road, road.cross1.coords[0] - self.coords[0], road.cross1.coords[1] - self.coords[1]))
+            sort(angle_list)
+
+            self.roads = [x[1] for x in angle_list]
+
+            define_priority_axis(self,axis)
+            if len(self.roads) > 2: # For 3 and 4-road crosses
+                while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
+                    self.roads.append(self.roads.pop(0))
 
         def angle(x1,y1,x2,y2):
-            return acos( (x1*x2 + y1*y2) / (sqrt(x1*x1 + y1*y1)*sqrt(x2*x2 + y2*y2)) ) * -1 * (x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
-            # minus sign because of the reversed y-axis on Tkinter
+            return acos((x1*x2 + y1*y2)/ (sqrt(x1*x1 + y1*y1) * sqrt(x2*x2 + y2*y2))) * -(x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
+            #minus put because of the reversed sense of y-axis on Tkinter
 
-        angle_list = list()
-        for i in range(1, len(vector_list)):
-            angle_list.append((angle(vector_list[i-1][1], vector_list[i-1][2], vector_list[i][1], vector_list[i][2]), road))
+        def define_priority_axis(self, axis):
+            """Define the priority axis of this cross"""
+            AxisError = TypeError("axis must be a tuple of 2 roads")
+            if (type(axis) is not tuple):
+                raise TypeError("Input axis is not a tuple")
+            if len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road):
+                raise ValueError("Input axis must be a tuple of 2 roads")
 
-        angle_list.sort()
+            self.priority_axis = axis
 
-        self.roads = [x[1] for x in angle_list]
+        def transfer_vehicle(self,vehicle,x):
+            """Pick up the vehicle from the road to put it at the beginning of the next road"""
+            if type(vehicle) is not Vehicle:
+                raise NotVehicleError
+            if road not in self.roads:
+                raise NotLinkedRoad
 
-        print(self.roads)
+            road.incoming_veh(x)
 
-# BUG: Code non fonctionnel dans le cas d'un Cross avec seulement 1 ou 2 routes
-        # if len(self.roads) > 2: # For 3 and 4-road crosses
-        #     while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
-        #         self.roads.append(self.roads.pop(0))
+        def choose_direction(self, origin_road):
+            """Return the next road for a vehicle arriving on the cross
+            Use the probability to go on each road (cross_dispatch_matrix)"""
 
+            if type(origin_road) is not Road:
+                raise NotRoadError
+            if origin_road not in self.roads:
+                raise NotLinkedRoad
 
-    def transfer_vehicle(self,vehicle,x):
-        """Pick up the vehicle from the road to put it at the beginning of the next road"""
-        if type(vehicle) is not Vehicle:
-            raise NotVehicleError
-        if road not in self.roads:
-            raise NotLinkedRoad
+            proba = random()
+            for j in range(len(self.roads)):
+                if proba <= self.cross_dispatch_matrix[self.roads.index(origin_road)][j]:
+                    return self.roads[j]
 
-        road.incoming_veh(x)
-
-    def choose_direction(self, origin_road):
-        """Return the next road for a vehicle arriving on the cross
-        Use the probability to go on each road (cross_dispatch_matrix)"""
-
-        if type(origin_road) is not Road:
-            raise NotRoadError
-        if origin_road not in self.roads:
-            raise NotLinkedRoad
-
-        proba = random()
-        for j in range(len(self.roads)):
-            if proba <= self.cross_dispatch_matrix[self.roads.index(origin_road)][j]:
-                return self.roads[j]
-
-        raise ValueError("Cannot return the next road")
+            raise ValueError("Cannot return the next road")
 
 
 
@@ -325,12 +323,13 @@ class Vehicle:
         delta_v = v- self.speed_of_leader()
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 
+
     def acceleration_IDM(self):
-        """Old acceleration function, using standard IDM"""
         return self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2)
 
+
     def acceleration(self):
-        """Return the global acceleration, using IIDM"""
+        """Return the global acceleration"""
         v = self.v
         z = self.z(v)
         a = self.a

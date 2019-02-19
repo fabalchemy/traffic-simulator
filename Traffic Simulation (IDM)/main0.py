@@ -23,8 +23,8 @@ dt = float(dtd)
 while t < 100:
     for veh in vehicle_list:
         a = veh.acceleration()
-        veh.v = max(0, veh.v + a*dt)
         veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
+        veh.v = max(0, veh.v + a*dt)
 
         # write the results in a file
         # format : index_voiture, temps, accélération, vitesse, position, écart avec leader
