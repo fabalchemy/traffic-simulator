@@ -1,6 +1,7 @@
 import tkinter as tk
+from math import cos, sin
 
-W, H = 300, 300
+W, H = 500, 300
 marge = 5000
 
 class Map(tk.Frame):
@@ -98,6 +99,10 @@ def clavier(event):
             map.canvas.create_rectangle(x0,y0,x1,y1, outline="black", fill=color)
 
 
+def draw_road(road):
+
+
+
 if __name__ == "__main__":
     # Create a window
     root = tk.Tk()
@@ -112,8 +117,6 @@ if __name__ == "__main__":
     car_pos = (x,y) = (15,20)
     car_angle = 3.1415/6 #rad
     car_geom = (l, w) = (30, 10)
-
-    from math import cos, sin
 
     dx = sin(car_angle)*w/2
     dy = cos(car_angle)*w/2

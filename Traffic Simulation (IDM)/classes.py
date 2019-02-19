@@ -27,7 +27,8 @@ class Road:
             raise TypeError("speed_limit is not int/float")
         self.speed_limit = speed_limit
 
-        self.lenght = Road.distance(cross1, cross2)
+        self.lenght = Road.length(cross1, cross2)
+        self.width = 5
 
         cross1.roads.append(self)
         cross2.roads.append(self)
@@ -35,7 +36,7 @@ class Road:
         self.vehicle_list_12 = list()
         self.vehicle_list_21 = list()
 
-    def distance(cross1,cross2):
+    def length(cross1,cross2):
         """Euclidean distance between two crosses"""
         x1,y1 = cross1.coords
         x2,y2 = cross2.coords
@@ -216,6 +217,8 @@ class TrafficLight(Cross):
         #Traffic light color = 0 for green, 1 for red
         self.color = 0
 
+        self.roads = list()
+
 
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
@@ -228,12 +231,16 @@ class GeneratorCross(Cross):
             raise TypeError("frequency is not int/float")
         self.frequency = frequency
 
+        self.roads = list()
+
+    def generate(self,t):
+        print("hello")
         #to complete
 
 class Vehicle:
     """Vehicle"""
 
-    def __init__(self,road,origin_cross,T, leader, s0, a = 1, vehicle_type = 0, b = 1.5):
+    def __init__(self,road,origin_cross,T, leader, s0 = 6, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car:
         road
         origin_cross : Cross by where the car enter on the road
@@ -260,9 +267,6 @@ class Vehicle:
         if type(b) not in (int,float):
             raise TypeError("Input b is not int/float")
 
-
-        # TODO: Be more specific about that problem
-
         self.road = road
         self.T = T
         self.leader = leader
@@ -271,8 +275,12 @@ class Vehicle:
 
         if vehicle_type == 0: # It's a car
             self.b_max = 8 # Maximum vehicle deceleration (in case of danger ahead)
+            self.length = 4
+            self.width = 2
         elif vehicle_type == 1 : # It's a truck
             self.b_max = 4
+            self.length = 16
+            self.width = 2.5
         else:
             raise TypeError("Non existing vehicle. 0 = car, 1 = truck")
 
@@ -284,8 +292,6 @@ class Vehicle:
 
         self.x = 0 # Position of the vehicle on the road
         self.v = 0 # Speed of the vehicule
-        self.v_old = 0 # Speed of the vehicle at the precedent time instant
-
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
