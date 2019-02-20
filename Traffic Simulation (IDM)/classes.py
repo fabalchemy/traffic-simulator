@@ -13,6 +13,12 @@ NotCrossError = TypeError("Input cross is not Cross type")
 NotLinkedRoad = ValueError("Input road is not linked to this cross")
 NotLinkedCross = ValueError("Input cross is not linked to this road")
 
+def angle(x1,y1,x2,y2):
+    sign = -1 if x1*y2 - x2*y1 >= 0 else 1
+
+    return acos( (x1*x2 + y1*y2) / (sqrt(x1*x1 + y1*y1)*sqrt(x2*x2 + y2*y2)) ) * sign
+    # minus sign because of the reversed y-axis on Tkinter
+
 class Road:
     """Class modelizing a road between two crosses"""
 
@@ -27,7 +33,13 @@ class Road:
             raise TypeError("speed_limit is not int/float")
         self.speed_limit = speed_limit
 
-        self.lenght = Road.length(cross1, cross2)
+        self.length = Road.cal_length(cross1, cross2)
+
+        (x1, y1) = cross1.coords
+        (x2, y2) = cross2.coords
+        print(x2-x1, y2-y1)
+        self.angle = angle(1, 0, x2-x1, y2-y1)
+        print(self.angle)
         self.width = 5
 
         cross1.add_road(self)
@@ -36,14 +48,14 @@ class Road:
         self.vehicle_list_12 = list()
         self.vehicle_list_21 = list()
 
-    def length(cross1,cross2):
+    def cal_length(cross1,cross2):
         """Euclidean distance between two crosses"""
         x1,y1 = cross1.coords
         x2,y2 = cross2.coords
 
         return float(((x2-x1)**2 + (y2-y1)**2)**0.5)
 
-    def incoming_veh(self,vehicle,origin_cross,x = 0):
+    def incoming_veh(self, vehicle, origin_cross,x = 0):
         """Incoming vehicle on the road from the origin_cross
         x = the abscissa on this road when arriving (useful when vehicles arrive from another road with a certain speed)"""
 
@@ -65,12 +77,13 @@ class Road:
 
         vehicle.x = x
 
-    def outgoing_veh(self,vehicle, destination_cross):
+    def outgoing_veh(self, vehicle, destination_cross):
         """Outgoing vehicle of the road"""
 
         #input paramaters check :
         if type(vehicle) is not Vehicle:
             raise notVehicleError
+
         if vehicle in self.vehicle_list_12:
             destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.x - self.lenght)
         elif vehicle in self.vehicle_list_21:
@@ -146,7 +159,7 @@ class Cross:
 
         self.priority_axis = axis
 
-    def sort_linked_roads(self):
+    def sort_roads(self):
         """Sort the roads from the 1st by their angle around the cross
         Then sort the roads to have the priority_axis on indexes 1, 3 in the list"""
 
@@ -156,10 +169,6 @@ class Cross:
                 vector_list.append((road, road.cross2.coords[0] - self.coords[0], road.cross2.coords[1] - self.coords[1]))
             else :
                 vector_list.append((road, road.cross1.coords[0] - self.coords[0], road.cross1.coords[1] - self.coords[1]))
-
-        def angle(x1,y1,x2,y2):
-            return acos( (x1*x2 + y1*y2) / (sqrt(x1*x1 + y1*y1)*sqrt(x2*x2 + y2*y2)) ) * 1* (x1*y2 - x2*y1) / fabs(x1*y2 - x2*y1)
-            # minus sign because of the reversed y-axis on Tkinter
 
         angle_list = list()
         angle_list.append((0, vector_list[0][0]))
@@ -172,7 +181,6 @@ class Cross:
         if len(self.roads) > 2: # For 3 and 4-road crosses
             while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
                 self.roads.append(self.roads.pop(0))
-
 
     def transfer_vehicle(self,vehicle,x):
         """Pick up the vehicle from the road to put it at the beginning of the next road"""
@@ -200,7 +208,7 @@ class Cross:
         raise ValueError("Cannot return the next road")
 
 
-
+# TODO: later
 class TrafficLight(Cross):
     """Traffic light, a type of cross"""
 
@@ -218,7 +226,7 @@ class TrafficLight(Cross):
 
         self.roads = list()
 
-
+# TODO:
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
 
@@ -328,10 +336,8 @@ class Vehicle:
         delta_v = v- self.speed_of_leader()
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 
-
     def acceleration_IDM(self):
         return self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2)
-
 
     def acceleration(self):
         """Return the global acceleration"""

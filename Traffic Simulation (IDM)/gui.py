@@ -69,14 +69,15 @@ def clavier(event):
     if event.char == "w":
         map.zoom(event)
     e = map.current_scale
+    dist = 1
     if event.char == "z": #haut
-        map.canvas.move("car", 5*e*cos(car_angle), -5*e*sin(car_angle))
+        map.canvas.move("car", dist*e*cos(car_angle), -dist*e*sin(car_angle))
     if event.char == "s": #bas
-        map.canvas.move("car", -5*e*cos(car_angle), 5*e*sin(car_angle))
+        map.canvas.move("car", -dist*e*cos(car_angle), dist*e*sin(car_angle))
     if event.char == "q": #gauche
-        map.canvas.move("car", -5*e*sin(car_angle), -5*e*cos(car_angle))
+        map.canvas.move("car", -dist*e*sin(car_angle), -dist*e*cos(car_angle))
     if event.char == "d": #droite
-        map.canvas.move("car", 5*e*sin(car_angle), 5*e*cos(car_angle))
+        map.canvas.move("car", dist*e*sin(car_angle), dist*e*cos(car_angle))
 
     if event.char == "x":
         car_angle = 2*3.1415/random.randint(1, 10)
@@ -99,34 +100,47 @@ def clavier(event):
             map.canvas.create_rectangle(x0,y0,x1,y1, outline="black", fill=color)
 
 
+def draw_cross(cross):
+    (x,y) = cross.coords
+    map.canvas.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="black")
+
 def draw_road(road):
+    (l, w) = (road.length, road.width)
+    ang = road.angle
+    (x,y) = road.cross1.coords
+    dx = sin(ang)*w/2
+    dy = cos(ang)*w/2
+    dxb = l*cos(ang)
+    dyb = l*sin(ang)
+    a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y-dyb-dy, x+dxb+dx, y-dyb+dy, fill="black", tag="road")
 
 
 
-if __name__ == "__main__":
-    # Create a window
-    root = tk.Tk()
-    # Create a map to display
-    map = Map(root)
-    # Put it inside the window
-    map.pack(fill="both", expand=True)
 
-    # DEBUG: Test pour afficher une voiture
-    # map.canvas.create_rectangle(10, 10, 10+5, 10+2, fill = "red", tag="car")
+# Create a window
+root = tk.Tk()
+# Create a map to display
+map = Map(root)
+# Put it inside the window
+map.pack(fill="both", expand=True)
 
-    car_pos = (x,y) = (15,20)
-    car_angle = 3.1415/6 #rad
-    car_geom = (l, w) = (30, 10)
+# DEBUG: Test pour afficher une voiture
+# map.canvas.create_rectangle(10, 10, 10+5, 10+2, fill = "red", tag="car")
 
-    dx = sin(car_angle)*w/2
-    dy = cos(car_angle)*w/2
-    dxb = l*cos(car_angle)
-    dyb = l*sin(car_angle)
-    a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
+car_pos = (x,y) = (15,20)
+car_angle = 3.1415/6 #rad
+car_geom = (l, w) = (4, 2)
+
+dx = sin(car_angle)*w/2
+dy = cos(car_angle)*w/2
+dxb = l*cos(car_angle)
+dyb = l*sin(car_angle)
+a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
 
 
-    # Event-listeners
-    root.bind("<MouseWheel>", map.zoom)
-    root.bind("<KeyPress>", clavier)
+# Event-listeners
+root.bind("<MouseWheel>", map.zoom)
+root.bind("<KeyPress>", clavier)
 
+def start_gui():
     root.mainloop()
