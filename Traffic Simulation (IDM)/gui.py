@@ -113,6 +113,7 @@ def draw_road(road):
     dxb = l*cos(ang)
     dyb = l*sin(ang)
     a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y-dyb-dy, x+dxb+dx, y-dyb+dy, fill="black", tag="road")
+    # a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="black", tag="road")
 
 
 
@@ -126,7 +127,6 @@ map.pack(fill="both", expand=True)
 
 # DEBUG: Test pour afficher une voiture
 # map.canvas.create_rectangle(10, 10, 10+5, 10+2, fill = "red", tag="car")
-
 car_pos = (x,y) = (15,20)
 car_angle = 3.1415/6 #rad
 car_geom = (l, w) = (4, 2)
@@ -136,7 +136,7 @@ dy = cos(car_angle)*w/2
 dxb = l*cos(car_angle)
 dyb = l*sin(car_angle)
 a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
-
+#############
 
 # Event-listeners
 root.bind("<MouseWheel>", map.zoom)

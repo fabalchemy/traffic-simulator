@@ -14,10 +14,11 @@ NotLinkedRoad = ValueError("Input road is not linked to this cross")
 NotLinkedCross = ValueError("Input cross is not linked to this road")
 
 def angle(x1,y1,x2,y2):
+    # using vector product to find the orientation of the vectors
+    # opposite sign because of the reversed y-axis on Tkinter
     sign = -1 if x1*y2 - x2*y1 >= 0 else 1
-
+    # using scalar product to find the angle and multiply it by the orientation
     return acos( (x1*x2 + y1*y2) / (sqrt(x1*x1 + y1*y1)*sqrt(x2*x2 + y2*y2)) ) * sign
-    # minus sign because of the reversed y-axis on Tkinter
 
 class Road:
     """Class modelizing a road between two crosses"""
@@ -171,9 +172,13 @@ class Cross:
                 vector_list.append((road, road.cross1.coords[0] - self.coords[0], road.cross1.coords[1] - self.coords[1]))
 
         angle_list = list()
-        angle_list.append((0, vector_list[0][0]))
-        for i in range(1, len(vector_list)):
-            angle_list.append((angle(vector_list[0][1], vector_list[0][2], vector_list[i][1], vector_list[i][2]), vector_list[i][0]))
+        # angle_list.append((0, vector_list[0][0]))
+        # for i in range(1, len(vector_list)):
+        #     angle_list.append((angle(vector_list[0][1], vector_list[0][2], vector_list[i][1], vector_list[i][2]), vector_list[i][0]))
+        for i in range(0, len(vector_list)):
+            angle_list.append((angle(1, 0, vector_list[i][1], vector_list[i][2]), vector_list[i][0]))
+
+
         angle_list.sort()
 
         self.roads = [x[1] for x in angle_list]
