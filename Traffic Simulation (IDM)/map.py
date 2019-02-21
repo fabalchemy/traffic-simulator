@@ -1,19 +1,19 @@
-from classes import *
-import gui0 as gui
+from simulation import *
+import gui
 
 cross_list = C = []
 road_list = R = []
 vehicle_list = V = []
 
 def generate():
-    cross_list.append(GeneratorCross(coords = (0,0), time_lapse=3))
+    cross_list.append(GeneratorCross(coords = (0,0), time_lapse=10))
     cross_list.append(Cross((100,0)))
     cross_list.append(Cross((50,50)))
     cross_list.append(Cross((50, 100)))
 
     road_list.append(Road(C[0], C[1], 54/3.6))
     R.append(Road(C[1], C[2], 54/3.6))
-    R.append(Road(C[2], C[0], 54/3.6))
+    # R.append(Road(C[2], C[0], 54/3.6))
     R.append(Road(C[2], C[3], 54/3.6))
     R.append(Road(C[1], C[3], 54/3.6))
 
@@ -35,4 +35,5 @@ def generate():
             msg = msg + str(road_list.index(road)) + " "
         print(msg)
 
+# generate()
 # gui.start()
