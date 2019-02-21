@@ -119,6 +119,25 @@ def draw_road(road):
     a = map.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y-dyb-dy, x+dxb+dx, y-dyb+dy, fill="grey26", tag="road")
     # a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="black", tag="road")
 
+def draw_vehicle(vehicle):
+    if vehicle.origin_cross == vehicle.road.cross1:
+        angle = vehicle.road.angle
+        x = vehicle.road.cross1.coords[0] + vehicle.x * cos(angle)
+        y = vehicle.road.cross1.coords[1] + vehicle.x * sin(angle)
+    else:
+        angle = - vehicle.road.angle
+        x = vehicle.road.cross2.coords[0] + vehicle.x * cos(angle)
+        y = vehicle.road.cross2.coords[1] + vehicle.x * sin(angle)
+
+    (l, w) = (vehicle.length, vehicle.width)
+
+    dx = sin(car_angle)*w/2
+    dy = cos(car_angle)*w/2
+    dxb = l*cos(car_angle)
+    dyb = l*sin(car_angle)
+    vehicle.rep = map.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
+
+
 
 # Create a window
 root = tk.Tk()

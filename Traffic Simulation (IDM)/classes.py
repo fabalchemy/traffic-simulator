@@ -293,7 +293,7 @@ class GeneratorCross(Cross):
             except TypeError:
                 new_vehicle.leader = None
             Cross.transfer_vehicle(self, new_vehicle, self.roads[0], 0)
-            new_vehicle.v = self.roads[0].speed_limit -1
+            new_vehicle.v = self.roads[0].speed_limit
             return new_vehicle
 
 
@@ -332,6 +332,7 @@ class Vehicle:
         self.s0 = s0
         self.a = a # Acceleration
 
+        self.rep = None # Index for graphic representation
         if vehicle_type == 0: # It's a car
             self.b_max = 8 # Maximum vehicle deceleration (in case of danger ahead)
             self.length = 4
@@ -385,7 +386,7 @@ class Vehicle:
         """Acceleration term linked to distance to the leader"""
         s = self.spacing_with_leader()
         #delta_v = self.speed_of_leader() - v
-        delta_v = v- self.speed_of_leader()
+        delta_v = v - self.speed_of_leader()
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 
     def acceleration_IDM(self):
@@ -397,7 +398,7 @@ class Vehicle:
         z = self.z(v)
         a = self.a
         a_free = self.a_free(v)
-        if v <= self.v0:
+        if v < self.v0:
             if z >= 1:
                 return max(-self.b_max, a * (1 - z**2))
             else:
