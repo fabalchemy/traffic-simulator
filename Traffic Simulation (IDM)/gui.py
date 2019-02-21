@@ -1,10 +1,11 @@
 import tkinter as tk
+import random
 from math import cos, sin
 
 W, H = 500, 300
 marge = 5000
 
-class Map(tk.Frame):
+class Container(tk.Frame):
     def __init__(self, root):
         # Initialize a Frame
         tk.Frame.__init__(self, root)
@@ -12,7 +13,7 @@ class Map(tk.Frame):
         self.canvas = tk.Canvas(self, width=W, height=H, background="MediumSeaGreen")
         self.canvas.configure(scrollregion=(-marge, -marge, marge, marge))
 
-        self.canvas.create_rectangle(1,1,W-1, H-1, tags="container")
+        self.canvas.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Setting up scrollbars to be able to move the map in the window
         self.xsb = tk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
@@ -63,7 +64,6 @@ class Map(tk.Frame):
         self.canvas.yview_scroll(int(y*(factor-1)), "units")
 
 # DEBUG: Fonctions pour tester le comportement
-import random
 def clavier(event):
     global car_angle, a
     if event.char == "w":
@@ -121,7 +121,7 @@ def draw_road(road):
 # Create a window
 root = tk.Tk()
 # Create a map to display
-map = Map(root)
+map = Container(root)
 # Put it inside the window
 map.pack(fill="both", expand=True)
 
@@ -142,5 +142,9 @@ a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+
 root.bind("<MouseWheel>", map.zoom)
 root.bind("<KeyPress>", clavier)
 
-def start_gui():
+def update():
+
+    after(100, update())
+
+def start():
     root.mainloop()

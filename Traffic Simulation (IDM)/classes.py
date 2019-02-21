@@ -5,6 +5,7 @@ Necessary classes for the simulation"""
 
 from math import inf, acos, cos, sqrt, fabs
 from random import random
+from operator import attrgetter
 
 # Often used Exceptions :
 NotRoadError = TypeError("Input road is not Road type")
@@ -24,10 +25,10 @@ class Road:
     """Class modelizing a road between two crosses"""
 
     def __init__(self, cross1, cross2, speed_limit):
-        if type(cross1) not in [Cross, TrafficLight, GeneratorCross]:
+        if not isinstance(cross1, Cross):
             raise NotCrossError
         self.cross1 = cross1
-        if type(cross2) not in [Cross, TrafficLight, GeneratorCross]:
+        if not isinstance(cross2, Cross):
             raise NotCrossError
         self.cross2 = cross2
         if type(speed_limit) not in (int,float):
@@ -49,6 +50,8 @@ class Road:
         self.vehicle_list_12 = list()
         self.vehicle_list_21 = list()
 
+        self.next_road = None
+
     def cal_length(cross1,cross2):
         """Euclidean distance between two crosses"""
         x1,y1 = cross1.coords
@@ -63,20 +66,21 @@ class Road:
         #input paramaters check :
         if type(vehicle) is not Vehicle:
             raise notVehicleError
-        if type(origin_cross) is not Cross: #Does it work for classes heriting from Cross ?
+        if not isinstance(origin_cross, Cross): #Does it work for classes heriting from Cross ?
             raise notCrossError
         if origin_cross not in [self.cross1,self.cross2]:
             raise NotLinkedCross
-        if x > self.lenght:
+        if x > self.length:
             raise ValueError("Incoming abscissa is too high")
 
         #Then we add the vehicle at the beginning of the road, in the corresponding direction
         if origin_cross == self.cross1:
-            self.vehicle_list_12 = self.vehicle_list_12.append(vehicle)
+            self.vehicle_list_12.append(vehicle)
         else:
-            self.vehicle_list_21 = self.vehicle_list_21.append(vehicle)
+            self.vehicle_list_21.append(vehicle)
 
         vehicle.x = x
+        vehicle.road = self
 
     def outgoing_veh(self, vehicle, destination_cross):
         """Outgoing vehicle of the road"""
@@ -86,9 +90,15 @@ class Road:
             raise notVehicleError
 
         if vehicle in self.vehicle_list_12:
-            destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.x - self.lenght)
+            if type(destination_cross) is GeneratorCross:
+                del self.vehicle_list_12[0]
+            else:
+                destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.next_road, vehicle.x - self.lenght)
         elif vehicle in self.vehicle_list_21:
-            return destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.x - self.lenght)
+            if type(destination_cross) is GeneratorCross:
+                del self.vehicle_list_21[0]
+            else:
+                return destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.next_road, vehicle.x - self.lenght)
         else:
             raise ValueError("Vehicle not on this road")
 
@@ -96,15 +106,29 @@ class Road:
         """Return the first vehicle to arrive on the destination cross by this road"""
 
         #input parameters check
-        if type(destination_cross) is not Cross:
+        if not isinstance(destination_cross, Cross):
             raise notCrossError
         if destination_cross not in [self.cross1,self.cross2]:
             raise crossNotOnRoad
 
         if destination_cross is self.cross1: # return the first vehicle arriving to the destination cross from this road
-            return self.vehicle_list_21[-1]
+            return self.vehicle_list_21[0]
         else:
+            return self.vehicle_list_12[0]
+
+    def last_vehicle(self, origin_cross):
+        """Return the last vehicle arrived on the road from the origin_cross"""
+
+        #input parameters check
+        if not isinstance(origin_cross, Cross):
+            raise notCrossError
+        if origin_cross not in [self.cross1,self.cross2]:
+            raise crossNotOnRoad
+
+        if origin_cross is self.cross1: # return the last vehicle arrived on the road from the origin_cross
             return self.vehicle_list_12[-1]
+        else:
+            return self.vehicle_list_21[-1]
 
 class Cross:
     """Class modelizing a cross"""
@@ -161,6 +185,12 @@ class Cross:
         self.priority_axis = axis
 
     def sort_roads(self):
+        self.roads.sort(key = attrgetter("angle"))
+        if len(self.roads) > 2: # For 3 and 4-road crosses
+            while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
+                self.roads.append(self.roads.pop(0))
+
+    def sort_roads_old(self):
         """Sort the roads from the 1st by their angle around the cross
         Then sort the roads to have the priority_axis on indexes 1, 3 in the list"""
 
@@ -187,14 +217,14 @@ class Cross:
             while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
                 self.roads.append(self.roads.pop(0))
 
-    def transfer_vehicle(self,vehicle,x):
+    def transfer_vehicle(self,vehicle,next_road,x):
         """Pick up the vehicle from the road to put it at the beginning of the next road"""
         if type(vehicle) is not Vehicle:
             raise NotVehicleError
-        if road not in self.roads:
+        if next_road not in self.roads:
             raise NotLinkedRoad
 
-        road.incoming_veh(x)
+        next_road.incoming_veh(vehicle,self, x)
 
     def choose_direction(self, origin_road):
         """Return the next road for a vehicle arriving on the cross
@@ -231,28 +261,47 @@ class TrafficLight(Cross):
 
         self.roads = list()
 
-# TODO:
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
 
-    def __init__(self,coords,frequency):
+    def __init__(self,coords,time_lapse):
         """coords : (x,y) coordinates
-        frequency [s] : time between two vehicle income"""
+        time_lapse [s] : time between two vehicle income"""
 
-        if type(frequency) not in (int,float):
-            raise TypeError("frequency is not int/float")
-        self.frequency = frequency
+        # Check coords
+        if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and
+        type(coords[1]) in (int,float)):
+            raise TypeError("coords must be a (x,y) tuple")
+        self.coords = coords
+
+        # Check time_lapse
+        if type(time_lapse) not in (int,float):
+            raise TypeError("time_lapse is not int/float")
+        self.time_lapse = time_lapse
 
         self.roads = list()
 
-    def generate(self,t):
-        print("hello")
-        #to complete
+    def generate(self, t, T = 2, s0 = 6, a =1, vehicle_type = 0, b = 1.5):
+        """Generate vehicles on the map"""
+        if t % self.time_lapse == 0:
+            print("new-vehicule !")
+            new_vehicle = Vehicle(self.roads[0], self, T, s0, a, vehicle_type, b)
+            try:
+                new_vehicle.leader = self.roads[0].last_vehicle(self)
+            except IndexError:
+                new_vehicle.leader = None
+            except TypeError:
+                new_vehicle.leader = None
+            Cross.transfer_vehicle(self, new_vehicle, self.roads[0], 0)
+            new_vehicle.v = self.roads[0].speed_limit -1
+            return new_vehicle
+
+
 
 class Vehicle:
     """Vehicle"""
 
-    def __init__(self,road,origin_cross,T, leader, s0 = 6, a = 1, vehicle_type = 0, b = 1.5):
+    def __init__(self,road,origin_cross,T = 2, s0 = 6, a = 1, vehicle_type = 0, b = 1.5):
         """Class modelizing a car:
         road
         origin_cross : Cross by where the car enter on the road
@@ -268,8 +317,6 @@ class Vehicle:
             raise NotRoadError
         if type(T) not in (int,float):
             raise TypeError("Input T is not int/float type")
-        if not (type(leader) is Vehicle or leader == None):
-            raise TypeError("Input leader is not Vehicle/None type")
         if type(s0) not in (int,float):
             raise TypeError("Input s0 is not int/float")
         if type(a) not in (int,float):
@@ -281,7 +328,7 @@ class Vehicle:
 
         self.road = road
         self.T = T
-        self.leader = leader
+        self.leader = None
         self.s0 = s0
         self.a = a # Acceleration
 
