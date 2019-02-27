@@ -1,5 +1,4 @@
 import tkinter as tk
-import random
 from math import cos, sin
 
 W, H = 500, 300
@@ -27,11 +26,11 @@ class Map(tk.Canvas):
 
     def scroll_move(self, event):
         # Move the map accordingly to the new event position
-        self.scan_dragto(event.x, event.y, gain=2)
+        self.scan_dragto(event.x, event.y, gain=1)
 
     def zoom(self, event):
         # Zoom in if the user scrolls up, zoom out otherwise
-        factor = 2 if event.delta < 0 else .5
+        factor = 2 if event.delta > 0 else .5
 
         # Scale every object on the canvas by (factor)
         self.scale("all", 0,0 , factor, factor)
@@ -44,6 +43,45 @@ class Map(tk.Canvas):
 
         self.xview_scroll(int(x*(factor-1)), "units")
         self.yview_scroll(int(y*(factor-1)), "units")
+
+    def draw_cross(self, cross):
+        (x,y) = cross.coords
+        self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey26", outline = "grey26", tag="cross")
+
+    def draw_road(self, road):
+        (l, w) = (road.length, road.width)
+        ang = road.angle
+        (x,y) = road.cross1.coords
+        dx = sin(ang)*w/2
+        dy = cos(ang)*w/2
+        dxb = l*cos(ang)
+        dyb = l*sin(ang)
+        a = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y-dyb-dy, x+dxb+dx, y-dyb+dy, fill="grey26", tag="road")
+        # a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="black", tag="road")
+
+    def draw_vehicle(self, vehicle):
+        if vehicle.origin_cross == vehicle.road.cross1:
+            angle = vehicle.road.angle
+            x = vehicle.road.cross1.coords[0] + vehicle.x * cos(angle)
+            y = vehicle.road.cross1.coords[1] + vehicle.x * sin(angle)
+        else:
+            angle = - vehicle.road.angle
+            x = vehicle.road.cross2.coords[0] + vehicle.x * cos(angle)
+            y = vehicle.road.cross2.coords[1] + vehicle.x * sin(angle)
+
+        (l, w) = (vehicle.length, vehicle.width)
+        e = self.current_scale
+        x = x*e
+        y = y*e
+        dx = sin(angle)*w/2 *e
+        dy = cos(angle)*w/2 *e
+        dxb = l*cos(angle) *e
+        dyb = l*sin(angle) *e
+
+        if vehicle.rep == None :
+            vehicle.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
+        else:
+            self.coords(vehicle.rep, x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
 
 class Container(tk.Frame):
     def __init__(self, root):
@@ -68,91 +106,46 @@ class Container(tk.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+class Controls(tk.Frame):
+    def __init__(self, root):
+        tk.Frame.__init__(self, root)
+        self.time_mgmt = tk.LabelFrame(self, text="Time managment", padx=10, pady= 10)
+        self.time_mgmt.pack()
 
-# DEBUG: Fonctions pour tester le comportement
+        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=10, resolution=0.01, orient=tk.HORIZONTAL, length=200)
+        self.speed.set(1)
+        self.speed.pack(fill="both", expand="yes")
+        self.play = tk.BooleanVar()
+        self.play.set(True)
+        self.play_b = tk.Radiobutton(self.time_mgmt, text="Play", variable=self.play, value=True)
+        self.pause_b = tk.Radiobutton(self.time_mgmt, text="Pause", variable=self.play, value=False)
+        self.play_b.pack(side=tk.LEFT)
+        self.pause_b.pack(side=tk.LEFT)
+
+
 def clavier(event):
-    global car_angle, a
-    if event.char == "w":
-        map.zoom(event)
-    e = map.current_scale
-    dist = 1
-    if event.char == "z": #haut
-        map.move("car", dist*e*cos(car_angle), -dist*e*sin(car_angle))
-    if event.char == "s": #bas
-        map.move("car", -dist*e*cos(car_angle), dist*e*sin(car_angle))
-    if event.char == "q": #gauche
-        map.move("car", -dist*e*sin(car_angle), -dist*e*cos(car_angle))
-    if event.char == "d": #droite
-        map.move("car", dist*e*sin(car_angle), dist*e*cos(car_angle))
-
-    if event.char == "x":
-        car_angle = 2*3.1415/random.randint(1, 10)
-        dx = sin(car_angle)*w/2
-        dy = cos(car_angle)*w/2
-        dxb = l*cos(car_angle)
-        dyb = l*sin(car_angle)
-        print(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
-        map.coords(a, x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy)
 
     if event.char == " ":
-        e = map.current_scale
-        for n in range(50):
-            x0 = random.randint(0, W-10) * e
-            y0 = random.randint(0, H-10) * e
-            x1 = x0 + random.randint(50, 100) * e
-            y1 = y0 + random.randint(50,100) * e
-            color = ("red", "orange", "yellow", "green", "blue")[random.randint(0,4)]
-            map.create_rectangle(x0,y0,x1,y1, outline="grey26", fill=color)
+        controls.play.set(False) if controls.play.get() == True else controls.play.set(True)
 
-def draw_cross(cross):
-    (x,y) = cross.coords
-    map.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="black")
-
-def draw_road(road):
-    (l, w) = (road.length, road.width)
-    ang = road.angle
-    (x,y) = road.cross1.coords
-    dx = sin(ang)*w/2
-    dy = cos(ang)*w/2
-    dxb = l*cos(ang)
-    dyb = l*sin(ang)
-    a = map.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y-dyb-dy, x+dxb+dx, y-dyb+dy, fill="grey26", tag="road")
-    # a = map.canvas.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="black", tag="road")
-
-def draw_vehicle(vehicle):
-    if vehicle.origin_cross == vehicle.road.cross1:
-        angle = vehicle.road.angle
-        x = vehicle.road.cross1.coords[0] + vehicle.x * cos(angle)
-        y = vehicle.road.cross1.coords[1] + vehicle.x * sin(angle)
-    else:
-        angle = - vehicle.road.angle
-        x = vehicle.road.cross2.coords[0] + vehicle.x * cos(angle)
-        y = vehicle.road.cross2.coords[1] + vehicle.x * sin(angle)
-
-    (l, w) = (vehicle.length, vehicle.width)
-
-    dx = sin(car_angle)*w/2
-    dy = cos(car_angle)*w/2
-    dxb = l*cos(car_angle)
-    dyb = l*sin(car_angle)
-    vehicle.rep = map.create_polygon(x+dx, y+dy, x-dx, y-dy, x-dxb-dx, y+dyb-dy, x-dxb+dx, y+dyb+dy, fill="red", tag="car")
 
 
 
 # Create a window
 root = tk.Tk()
-# Create a map to display
 container = Container(root)
-# Put it inside the window
-container.pack(fill="both", expand=True)
-
+container.grid(row=0, column=0, sticky="nsew")
 map = container.map
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
+controls = Controls(root)
+controls.grid(row=0, column=1, sticky="ne")
+
 # Event-listeners
 map.bind("<MouseWheel>", map.zoom)
 root.bind("<KeyPress>", clavier)
 
-def update():
-    after(100, update())
 
 def start():
     root.mainloop()

@@ -272,6 +272,7 @@ class Vehicle:
             raise TypeError("Input b is not int/float")
 
         self.road = road
+        self.origin_cross = origin_cross
         self.T = T
         self.leader = None
         self.s0 = s0

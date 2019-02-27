@@ -18,9 +18,9 @@ def generate():
     R.append(Road(C[1], C[3], 54/3.6))
 
     for c in C:
-        gui.draw_cross(c)
+        gui.map.draw_cross(c)
     for r in R:
-        gui.draw_road(r)
+        gui.map.draw_road(r)
 
     C[0].define_priority_axis((R[0], R[2]))
     C[1].define_priority_axis((R[0], R[1]))
@@ -34,6 +34,3 @@ def generate():
         for road in crs.roads:
             msg = msg + str(road_list.index(road)) + " "
         print(msg)
-
-# generate()
-# gui.start()
