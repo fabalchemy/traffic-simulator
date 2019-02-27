@@ -1,7 +1,6 @@
 # coding = utf-8
 """Classes necessary to run the mathematical simulation"""
 
-
 from math import inf, acos, cos, sqrt, fabs
 from random import random
 from operator import attrgetter
@@ -14,11 +13,11 @@ NotLinkedRoad = ValueError("Input road is not linked to this cross")
 NotLinkedCross = ValueError("Input cross is not linked to this road")
 
 def angle(x,y):
-    print(x, y)
-    # using vector product to find the orientation of the vectors
-    # opposite sign because of the reversed y-axis on Tkinter
-    sign = -1 if y - x >= 0 else 1
-    # using scalar product to find the angle and multiply it by the orientation
+    """Give the oriented angle [-3.14 ; +3.14] between the vector (x,y) and the horizontal axis (1,0)"""
+    # The y-axis is "reversed" in Tkinter !
+    # We use vector product to find the orientation of the vectors
+    sign = 1 if y >= 0 else -1
+    # We use scalar product to find the angle and multiply it by the orientation
     return acos((x) / sqrt(x*x + y*y)) * sign
 
 class Road:
@@ -41,6 +40,7 @@ class Road:
         x2,y2 = cross2.coords
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.angle = angle(x2-x1, y2-y1)
+        print(self.angle)
         self.width = 5
 
         cross1.add_road(self)
@@ -332,7 +332,6 @@ class Vehicle:
     def z(self, v):
         """Acceleration term linked to distance to the leader"""
         s = self.spacing_with_leader()
-        #delta_v = self.speed_of_leader() - v
         delta_v = v - self.speed_of_leader()
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 

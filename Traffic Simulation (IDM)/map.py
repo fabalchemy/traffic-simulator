@@ -1,26 +1,31 @@
 from simulation import *
 import gui
 
+generator_list = G = []
 cross_list = C = []
 road_list = R = []
 vehicle_list = V = []
 
 def generate():
-    cross_list.append(GeneratorCross(coords = (0,0), time_lapse=10))
-    cross_list.append(Cross((100,0)))
+    gen = GeneratorCross(coords = (0,0), time_lapse=5)
+    generator_list.append(gen)
+    cross_list.append(gen)
+    cross_list.append(Cross((100,20)))
     cross_list.append(Cross((50,50)))
-    cross_list.append(Cross((50, 100)))
+    cross_list.append(GeneratorCross((50, 100), time_lapse=10))
+    gen = GeneratorCross((50, 150), time_lapse=10)
+    generator_list.append(gen)
+    cross_list.append(gen)
 
     road_list.append(Road(C[0], C[1], 54/3.6))
     R.append(Road(C[1], C[2], 54/3.6))
     # R.append(Road(C[2], C[0], 54/3.6))
     R.append(Road(C[2], C[3], 54/3.6))
     R.append(Road(C[1], C[3], 54/3.6))
+    R.append(Road(C[3], C[4], 54/3.6))
+    gui.map.draw_cross(C)
 
-    for c in C:
-        gui.map.draw_cross(c)
-    for r in R:
-        gui.map.draw_road(r)
+    gui.map.draw_road(R)
 
     C[0].define_priority_axis((R[0], R[2]))
     C[1].define_priority_axis((R[0], R[1]))
