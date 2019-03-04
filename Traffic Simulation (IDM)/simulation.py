@@ -12,6 +12,13 @@ NotCrossError = TypeError("Input cross is not Cross type")
 NotLinkedRoad = ValueError("Input road is not linked to this cross")
 NotLinkedCross = ValueError("Input cross is not linked to this road")
 
+# Lists
+generator_list = G = []
+cross_list = C = []
+road_list = R = []
+vehicle_list = V = []
+vehicle_to_delete = []
+
 def angle(x,y):
     """Give the oriented angle [-3.14 ; +3.14] between the vector (x,y) and the horizontal axis (1,0)"""
     # The y-axis is "reversed" in Tkinter !
@@ -67,31 +74,42 @@ class Road:
         # We add the vehicle at the beginning of the road, in the corresponding direction
         if origin_cross == self.cross1:
             self.vehicle_list_12.append(vehicle)
+            vehicle.destination_cross = self.cross2
         else:
             self.vehicle_list_21.append(vehicle)
+            vehicle.destination_cross = self.cross1
 
         vehicle.x = x
         vehicle.road = self
+        vehicle.origin_cross = origin_cross
 
-    def outgoing_veh(self, vehicle, destination_cross):
+        # We choose the next road
+        vehicle.next_road = vehicle.destination_cross.choose_direction(self)
+
+    def outgoing_veh(self, vehicle):
         """Outgoing vehicle of the road"""
+        if vehicle != None:
+            destination_cross = vehicle.destination_cross
 
-        # We check the paramaters
-        if type(vehicle) is not Vehicle:
-            raise notVehicleError
+            # We check the paramaters
+            if type(vehicle) is not Vehicle:
+                raise notVehicleError
 
-        if vehicle in self.vehicle_list_12:
-            if type(destination_cross) is GeneratorCross:
-                del self.vehicle_list_12[0]
-            else:
-                destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.next_road, vehicle.x - self.lenght)
-        elif vehicle in self.vehicle_list_21:
-            if type(destination_cross) is GeneratorCross:
-                del self.vehicle_list_21[0]
-            else:
-                return destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.next_road, vehicle.x - self.lenght)
-        else:
-            raise ValueError("Vehicle not on this road")
+            if vehicle.x > self.length:
+                if vehicle in self.vehicle_list_12:
+                    if type(destination_cross) is GeneratorCross:
+                        del self.vehicle_list_12[0]
+                        vehicle.destroy()
+                    else:
+                        destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.next_road, vehicle.x - self.length)
+                elif vehicle in self.vehicle_list_21:
+                    if type(destination_cross) is GeneratorCross:
+                        del self.vehicle_list_21[0]
+                        vehicle.destroy()
+                    else:
+                        return destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.next_road, vehicle.x - self.length)
+                else:
+                    raise ValueError("Vehicle not on this road")
 
     def first_vehicle(self,destination_cross):
         """Return the first vehicle arriving on destination_cross from this road"""
@@ -124,7 +142,7 @@ class Road:
 class Cross:
     """Class modelizing a cross"""
 
-    def __init__(self, coords, dispatch = list()):
+    def __init__(self, coords):
         """(cartesian) coords : (x,y)
         dispatch : list of lists of vehicles dispatch on other roads
             (L[x] = entry, L[x][y] exit)"""
@@ -133,27 +151,12 @@ class Cross:
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float) and
         type(coords[1]) in (int,float)):
             raise TypeError("coords must be a (x,y) tuple")
-        # Check dispatch
-        if type(dispatch) is not list:
-            raise TypeError("dispatch must be list type")
-        # Check dispatch is list of lists of the same lenght (same number of incoming and outgoing roads)
-        roads_nb = len(dispatch)
-        for road in range(roads_nb):
-            if type(dispatch[road]) is not list:
-                raise TypeError("dispatch must be a list of lists")
-            if len(dispatch[road]) != roads_nb:
-                raise ValueError("dispatch must have the same number of incoming and outgoing roads")
 
-            # By our own choice, cars cannot turn back when arriving to a cross
-            # This involves for all incoming road that dispatch[i][i] must equal 0
-        # TODO
-        #     if dispatch[road][road] != 0:
-        #         raise ValueError("Vehicles cannot turn back at a cross. This involves dispatch[road i][road i] must be 0 for every road.")
-        #
-        # self.dispatch = dispatch
 
+        self.dispatch = None
         self.coords = coords
         self.roads = list()
+        self.dispatch = None
 
     def add_road(self,road):
         """Add the new road connected to the cross to self.roads"""
@@ -182,7 +185,6 @@ class Cross:
             while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
                 self.roads.append(self.roads.pop(0))
 
-
     def transfer_vehicle(self, vehicle, next_road,x):
         """Pick up the vehicle from road to put it at the beginning of next_road"""
         if type(vehicle) is not Vehicle:
@@ -201,12 +203,49 @@ class Cross:
         if origin_road not in self.roads:
             raise NotLinkedRoad
 
+        if type(self) is GeneratorCross:
+            return None
+
+        if len(self.roads) == 2:
+            if origin_road == self.roads[0]:
+                return self.roads[1]
+            else:
+                return self.roads[0]
+
         proba = random()
         for j in range(len(self.roads)):
             if proba <= self.dispatch[self.roads.index(origin_road)][j]:
                 return self.roads[j]
 
         raise ValueError("Cannot return the next road")
+
+    def set_dispatch(self, dispatch):
+        print("dispatch reçu", dispatch)
+        # Check dispatch
+        if type(dispatch) is not list:
+            raise TypeError("dispatch must be list type")
+        # Check dispatch is list of lists of the same length (same number of incoming and outgoing roads)
+        roads_nb = len(dispatch)
+        for road in range(roads_nb):
+            if type(dispatch[road]) is not list:
+                raise TypeError("dispatch must be a list of lists")
+            if len(dispatch[road]) != roads_nb:
+                raise ValueError("dispatch must have the same number of incoming and outgoing roads")
+
+        # By our own choice, cars cannot turn back when arriving to a cross
+        # This involves that for all incoming road dispatch[i][i] must equal 0
+            if dispatch[road][road] != 0:
+                print(dispatch)
+                raise ValueError("Vehicles cannot turn back at a cross. This involves dispatch[road i][road i] must be 0 for every road.")
+
+
+        for i in range(len(dispatch)):
+            for j in range(1,len(dispatch)):
+                dispatch[i][j] += dispatch[i][j-1]
+            if dispatch[i][-1] != 1:
+                raise ValueError("Frequencies sum must equal 1")
+
+        self.dispatch = dispatch
 
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
@@ -232,19 +271,22 @@ class GeneratorCross(Cross):
         road = self.roads[0]
 
         if t % self.time_lapse == 0:
-            print(str(t) + " : new-vehicule !")
+            leader = self.roads[0].last_vehicle(self)
+            if (leader != None and leader.x >= leader.s0) or leader == None:
+                print(str(t) + " : new-vehicule !")
 
-            new_vehicle = Vehicle(road, self)
-            new_vehicle.leader = self.roads[0].last_vehicle(self)
+                new_vehicle = Vehicle(road, self)
+                new_vehicle.leader = leader
 
-            Cross.transfer_vehicle(self, new_vehicle, self.roads[0], 0)
-            new_vehicle.v = self.roads[0].speed_limit
-            return new_vehicle
+                Cross.transfer_vehicle(self, new_vehicle, self.roads[0], 0)
+                new_vehicle.v = self.roads[0].speed_limit
+                return new_vehicle
+        return None
 
 class Vehicle:
     """Vehicle"""
 
-    def __init__(self,road,origin_cross,T = 2, s0 = 6, a = 1, vehicle_type = "car", b = 1.5):
+    def __init__(self,road,origin_cross,T = 2, s0 = 5.5, a = 1, vehicle_type = "car", b = 1.5):
         """Class modelizing a car:
         road
         origin_cross : Cross by where the car enter on the road
@@ -271,6 +313,8 @@ class Vehicle:
 
         self.road = road
         self.origin_cross = origin_cross
+        self.destination_cross = None
+        self.next_road = None
         self.T = T
         self.leader = None
         self.s0 = s0
@@ -297,6 +341,12 @@ class Vehicle:
 
         self.x = 0 # Position of the vehicle on the road
         self.v = 0 # Speed of the vehicule
+
+    def destroy(self):
+        print("DELETE")
+        vehicle_to_delete.append(self)
+        vehicle_list.remove(self)
+
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""

@@ -8,19 +8,20 @@ file = open("results.txt", "w")
 decimal.getcontext().prec = 5 # Set the precision for the decimal module
 t = decimal.Decimal(0)
 dt_s = decimal.Decimal(1)/decimal.Decimal(100)
-dt_g = 100 # [ms] # Time interval for graphic update
-
+dt_g = 50 # [ms] # Time interval for graphic update
 def next_steps(dt_d, steps):
     global t
     dt = float(dt_d)
     for i in range(steps):
         # file.write(str(t) + "\n")
 
+        # Generate vehicles
         for gen in generator_list:
             veh = gen.generate(t)
             if veh != None:
                 vehicle_list.append(veh)
 
+        # Update acceleration, speed and position of each vehicle
         for veh in vehicle_list:
             a = veh.acceleration()
             veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
@@ -28,6 +29,15 @@ def next_steps(dt_d, steps):
             # write the results in a file
             # file.write("{0}     {1}     {2:.4f}     {3:.4f}     {4:.4f}     {5:.4f}"
             #             .format(V.index(veh), road_list.index(veh.road), a, veh.v, veh.x, veh.spacing_with_leader()) + "\n")
+
+        # Check if the vehicles must change road
+        for road in road_list:
+            road.outgoing_veh(road.first_vehicle(road.cross1))
+            road.outgoing_veh(road.first_vehicle(road.cross2))
+
+        for veh in vehicle_to_delete:
+            gui.map.delete(veh.rep)
+            vehicle_to_delete.remove(veh)
 
         t+= dt_d
 
