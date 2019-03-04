@@ -49,8 +49,6 @@ class Map(tk.Canvas):
             (x,y) = cross.coords
             self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey26", outline = "grey26", tag="cross")
 
-
-
     def draw_road(self, road_list):
         for road in road_list:
             (l, w) = (road.length, road.width)
@@ -133,8 +131,6 @@ def keyboard_listener(event):
         controls.play.set(False) if controls.play.get() == True else controls.play.set(True)
 
 
-
-
 # Create a window
 root = tk.Tk()
 container = Container(root)
@@ -149,7 +145,3 @@ controls.grid(row=0, column=1, sticky="ne")
 # Event-listeners
 map.bind("<MouseWheel>", map.zoom)
 root.bind("<KeyPress>", keyboard_listener)
-
-
-def start():
-    root.mainloop()

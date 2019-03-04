@@ -2,7 +2,6 @@
 from simulation import *
 from map import *
 
-
 import decimal
 file = open("results.txt", "w")
 
@@ -11,13 +10,11 @@ t = decimal.Decimal(0)
 dt_s = decimal.Decimal(1)/decimal.Decimal(100)
 dt_g = 100 # [ms] # Time interval for graphic update
 
-generate()
-
 def next_steps(dt_d, steps):
     global t
     dt = float(dt_d)
     for i in range(steps):
-        file.write(str(t) + "\n")
+        # file.write(str(t) + "\n")
 
         for gen in generator_list:
             veh = gen.generate(t)
@@ -33,7 +30,6 @@ def next_steps(dt_d, steps):
             #             .format(V.index(veh), road_list.index(veh.road), a, veh.v, veh.x, veh.spacing_with_leader()) + "\n")
 
         t+= dt_d
-
 
 def update():
     if gui.controls.play.get() == True:

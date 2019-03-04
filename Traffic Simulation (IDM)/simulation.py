@@ -241,8 +241,6 @@ class GeneratorCross(Cross):
             new_vehicle.v = self.roads[0].speed_limit
             return new_vehicle
 
-
-
 class Vehicle:
     """Vehicle"""
 
