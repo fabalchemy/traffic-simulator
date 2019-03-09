@@ -1,5 +1,6 @@
 from simulation import *
 import gui
+import random
 
 def copy_list(a):
     b = list()
@@ -19,32 +20,28 @@ default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
                     [0.4 , 0.2 , 0.4 , 0   ]]
 disp = {3:default_dispatch_3, 4:default_dispatch_4}
 
-gen = GeneratorCross(coords = (25,25), time_lapse=4)
-generator_list.append(gen)
-cross_list.append(gen)
+ecart = e = 100
+# coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
+coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150)]
 
-cross_list.append(Cross((50,25)))
-cross_list.append(Cross((100,25)))
-cross_list.append(Cross((50,100)))
+cross_list.append(Cross((150,150)))
 
-gen = GeneratorCross((50, 150), time_lapse=4)
-generator_list.append(gen)
-cross_list.append(gen)
+for coords in coords_gen:
+    gen = GeneratorCross(coords = coords, time_lapse = random.randint(1,4))
+    generator_list.append(gen)
+    cross_list.append(gen)
 
 
 road_list.append(Road(C[0], C[1], 54/3.6))
-road_list.append(Road(C[1], C[2], 54/3.6))
-road_list.append(Road(C[2], C[3], 54/3.6))
-road_list.append(Road(C[1], C[3], 54/3.6))
-road_list.append(Road(C[3], C[4], 54/3.6))
+road_list.append(Road(C[0], C[2], 54/3.6))
+road_list.append(Road(C[0], C[3], 54/3.6))
+# road_list.append(Road(C[0], C[4], 54/3.6))
 
 gui.map.draw_cross(C)
 gui.map.draw_road(R)
 
-C[1].define_priority_axis((R[0], R[1]))
-C[3].define_priority_axis((R[2], R[4]))
-C[1].sort_roads()
-C[3].sort_roads()
+C[0].define_priority_axis((R[0], R[1]))
+C[0].sort_roads()
 
 for crs in cross_list:
     msg = "Cross #" + str(cross_list.index(crs)) + " "
@@ -52,7 +49,4 @@ for crs in cross_list:
         msg = msg + str(road_list.index(road)) + " "
     print(msg)
     if len(crs.roads) >= 3:
-        print("disp envoyé", copy_list(disp[len(crs.roads)]))
         crs.set_dispatch(copy_list(disp[len(crs.roads)]))
-        if crs == C[1]:
-            print("prout", disp[3])
