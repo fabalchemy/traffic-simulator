@@ -30,7 +30,7 @@ def angle(x,y):
 class Road:
     """Class representing a road, which is a line segment between two intersections"""
 
-    def __init__(self, cross1, cross2, speed_limit):
+    def __init__(self, cross1, cross2, speed_limit, id = None):
         """Initialize a Road object connected to two Intersections, with a speed_limit"""
         if not isinstance(cross1, Cross):
             raise NotCrossError
@@ -42,12 +42,13 @@ class Road:
         self.cross1 = cross1
         self.cross2 = cross2
         self.speed_limit = speed_limit
+        self.id = id
 
         x1,y1 = cross1.coords
         x2,y2 = cross2.coords
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.angle = angle(x2-x1, y2-y1)
-        print(self.angle)
+        print("Road : ", self.id, "angle : ", self.angle)
         self.width = 5
 
         cross1.add_road(self)
@@ -154,7 +155,7 @@ class Road:
 class Cross:
     """Class modelizing a cross"""
 
-    def __init__(self, coords):
+    def __init__(self, coords,id = None):
         """(cartesian) coords : (x,y)
         dispatch : list of lists of vehicles dispatch on other roads
             (L[x] = entry, L[x][y] exit)"""
@@ -165,6 +166,7 @@ class Cross:
             raise TypeError("coords must be a (x,y) tuple")
 
 
+        self.id = id
         self.dispatch = None
         self.coords = coords
         self.roads = list()
@@ -177,6 +179,7 @@ class Cross:
 
         if len(self.roads) >= 4:
             print("Cannot add a new road on this cross, crosses cannot be linked with more than 4 roads")
+            print("Cross ID: ",self.id)
         else:
             self.roads.append(road)
 
@@ -184,18 +187,33 @@ class Cross:
         """Define the priority axis of the cross
         axis : a tuple containing 2 roads"""
         AxisError = TypeError("axis must be a tuple of 2 roads")
-        if (type(axis) is not tuple):
-            raise TypeError("Input axis is not a tuple")
-        if len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road):
-            raise ValueError("Input axis must be a tuple of 2 roads")
+        if (type(axis) is not tuple) and axis != None:
+            raise TypeError("Input axis is not a tuple or NoneType")
+        if axis != None and (len(axis) != 2 or (type(axis[0]) is not Road) or (type(axis[1]) is not Road)):
+            raise ValueError("Input axis must be a tuple of 2 roads or None")
 
         self.priority_axis = axis
 
     def sort_roads(self):
-        self.roads.sort(key = attrgetter("angle"))
+        temp_list = []
+        print([(road.id, road.angle) for road in self.roads])
+        for road in self.roads:
+            if road.cross1 == self:
+                print("cas1, cross ={},road={}".format(self.id,road.id))
+                temp_list.append((road, road.angle))
+            else:
+                print("cas2 cross ={},road={}".format(self.id,road.id))
+                angle = road.angle%(2*3.1415) - 3.1415
+                # angle = road.angle - 3.1415
+                temp_list.append((road, angle))
+
+        temp_list.sort(key = lambda item : item[1])
+        print([(item[0].id, item[1]) for item in temp_list])
+        self.roads = [item[0] for item in temp_list]
+
         if len(self.roads) > 2: # For 3 and 4-road crosses
             while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
-                print("stuck here")
+                print("stuck here : cross =", self.id)
                 self.roads.append(self.roads.pop(0))
 
     def transfer_vehicle(self, vehicle, next_road, x):

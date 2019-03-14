@@ -1,7 +1,7 @@
 import tkinter as tk
 from math import cos, sin
 
-W, H = 500, 300
+W, H = 4000, 2500
 marge = 5000
 
 class Map(tk.Canvas):
