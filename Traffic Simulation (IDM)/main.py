@@ -1,47 +1,37 @@
-from classes import *
-import os
+# coding = utf-8
+from simulation import *
+from map import *
 
-
-def RK4(v, f, dt):
-    v1 = f(v)*dt
-    v2 = f(v+v1*0.5)*dt
-    v3 = f(v+v2*0.5)*dt
-    v4 = f(v+v3)*dt
-    v = v + (v1 + 2*(v2 + v3) + v4)/6
-    return v
-
-def euler(v, acc, dt):
-    return v + acc(v)*dt
-
+import decimal
 file = open("results.txt", "w")
 
+decimal.getcontext().prec = 4
+t = decimal.Decimal(0)
+dtd = decimal.Decimal(1)/decimal.Decimal(10)
+dt = float(dtd)
 
-C1 = Cross((0,0), True)
-C2 = Cross((100,0), False)
-R = Road("R", C1, C2, 54/3.6)
-veh1 = Vehicle(road = R, T=1, leader = None, s0 = 3, a=2)
-veh2 = None
-t = 0
-dt = 0.01
+generate()
+
 while t < 100:
-    if t >= 2 and t<2.1 :
-        veh2 = Vehicle(road = R, T=1, leader = veh1, s0=3, a=2)
+    file.write(str(t) + "\n")
+    veh1 = C[0].generate(t)
+    if veh1 != None:
+        vehicle_list.append(veh1)
+    for veh in vehicle_list:
+        a = veh.acceleration()
+        veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
+        veh.v = max(0, veh.v + a*dt)
+        # write the results in a file
+        file.write("{0}     {1}     {2:.4f}     {3:.4f}     {4:.4f}     {5:.4f}"
+                    .format(V.index(veh), road_list.index(veh.road), a, veh.v, veh.x, veh.spacing_with_leader()) + "\n")
 
-    if t<=2:
-        veh1.x = veh1.x + veh1.v * dt + max(0, 0.5 * veh1.acceleration() * dt * dt)
-        veh1.v = max(0, veh1.v + veh1.acceleration()*dt)
-        file.write("{0:.4f}     {1:.4f}     {2:.4f}     {3:.4f}".format(t, veh1.acceleration(), veh1.v, veh1.x) + "\n")
-    else:
-        if t<70:
-            veh1.x = veh1.x + veh1.v * dt + max(0, 0.5 * veh1.acceleration() * dt * dt)
-            veh1.v = max(0, veh1.v + veh1.acceleration()*dt)
-        else:
-            veh1.v = 0
-        veh2.x = veh2.x + veh2.v * dt + max(0, 0.5 * veh2.acceleration() * dt * dt)
-        veh2.v = max(0, veh2.v + veh2.acceleration()*dt)
-        file.write("{:.4f}     {:.4f}     {:.4f}     {:.4f}     {:.4f}     {:.4f}      {:.4f}      {:.4f}"
-            .format(t, veh1.acceleration(), veh1.v, veh1.x, veh2.acceleration(), veh2.v, veh2.x, veh1.x-veh2.x) + "\n")
+    t+= dtd
 
-    t = t + dt
+    if t == 50:
+        dumb_leader = Vehicle(R[0], C[0])
+        dumb_leader.v = 0
+        a = V[0].x + 20
+        dumb_leader.x = a
+        V[0].leader = dumb_leader
 
 file.close()
