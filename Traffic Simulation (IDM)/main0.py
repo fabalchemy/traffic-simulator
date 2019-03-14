@@ -2,6 +2,7 @@
 from simulation import *
 from map1 import *
 from time import *
+from math import exp
 
 import decimal
 file = open("results.txt", "w")
@@ -48,18 +49,18 @@ def next_steps(dt_d, steps):
 
         t+= dt_d
 
-        global delai
-        delai = perf_counter() - T
+    global delai
+    delai = perf_counter() - T
 
 def update():
-    T = perf_counter()
     global delai
+    T = perf_counter()
     if gui.controls.play.get() == True:
         next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicle_list)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
-    delai += T - perf_counter() + delai
-    gui.map.after(int(dt_g - delai * 1000), update)
+    delai += perf_counter() - T + delai
+    gui.map.after(int(dt_g * exp(-delai*1000/dt_g)), update)
 
 gui.map.after(dt_g, update)
 gui.root.mainloop()
