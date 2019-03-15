@@ -3,6 +3,7 @@ from math import cos, sin
 
 W, H = 4000, 2500
 marge = 5000
+dx,dy = 20,20 # Elementary move for the canvas
 
 class Map(tk.Canvas):
     def __init__(self, master, width, height, background):
@@ -30,7 +31,10 @@ class Map(tk.Canvas):
 
     def zoom(self, event):
         # Zoom in if the user scrolls up, zoom out otherwise
-        factor = 2 if event.delta > 0 else .5
+        if event.delta > 0 or event.keysym == "Up":
+            factor = 2
+        elif event.delta <= 0 or event.keysym == "Down":
+            factor = .5
 
         # Scale every object on the canvas by (factor)
         self.scale("all", 0,0 , factor, factor)
@@ -126,9 +130,35 @@ class Controls(tk.Frame):
         self.pause_b.pack(side=tk.LEFT)
 
 
+        self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
+        self.information.pack()
+        tk.Label(master = self.information, text = "Nombre de voitures : ").pack(side = tk.LEFT)
+        self.nb_veh = tk.IntVar()
+        self.nb_veh.set(0)
+        tk.Label(master = self.information, textvariable = self.nb_veh).pack(side = tk.LEFT)
+
+
 def keyboard_listener(event):
     if event.char == " ":
         controls.play.set(False) if controls.play.get() == True else controls.play.set(True)
+
+    elif event.keysym == "Right":
+        map.scan_mark(0,0)
+        map.scan_dragto(-int(dx//map.current_scale),0)
+
+    elif event.keysym == "Left":
+        map.scan_mark(0,0)
+        map.scan_dragto(int(dx//map.current_scale),0)
+
+    elif event.keysym == "Up":
+        map.scan_mark(0,0)
+        map.scan_dragto(0,int(dy//map.current_scale))
+
+    elif event.keysym == "Down":
+        map.scan_mark(0,0)
+        map.scan_dragto(0,-int(dy//map.current_scale))
+
+
 
 
 # Create a window
@@ -145,3 +175,4 @@ controls.grid(row=0, column=1, sticky="ne")
 # Event-listeners
 map.bind("<MouseWheel>", map.zoom)
 root.bind("<KeyPress>", keyboard_listener)
+root.bind("<Control-Key>",map.zoom)

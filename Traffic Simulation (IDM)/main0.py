@@ -59,6 +59,7 @@ def update():
         next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicle_list)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
+        gui.controls.nb_veh.set(len(vehicle_list))
     delai += perf_counter() - T + delai
     gui.map.after(int(dt_g * exp(-delai*1000/dt_g)), update)
 
