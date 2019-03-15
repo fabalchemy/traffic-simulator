@@ -27,16 +27,10 @@ def next_steps(dt_d, steps):
 
         # Update acceleration, speed and position of each vehicle
         for veh in vehicle_list:
-            # print(vehicle_list.index(veh))
-            # print("ROAD ", road_list.index(veh.road))
-            # if veh.leader != None:
-            #     print("LEADER ", vehicle_list.index(veh.leader))
+
             a = veh.acceleration()
             veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
             veh.v = max(0, veh.v + a*dt)
-            # write the results in a file
-            # file.write("{0}     {1}     {2:.4f}     {3:.4f}     {4:.4f}     {5:.4f}"
-            #             .format(V.index(veh), road_list.index(veh.road), a, veh.v, veh.x, veh.spacing_with_leader()) + "\n")
 
         # Check if the vehicles must change road
         for road in road_list:

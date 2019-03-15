@@ -32,13 +32,13 @@ for coords in generator_cross_coords:
     generator_list.append(gen)
     cross_list.append(gen)
 
-mini = 4000
+# mini = 4000
 for i in range(len(roads)):
     road_list.append(Road(cross_list[roads[i][0]],cross_list[roads[i][1]],15,i))
-    if road_list[-1].length < mini:
-        mini = road_list[-1].length
-
-print("MINIMUM : ", mini)
+#     if road_list[-1].length < mini:
+#         mini = road_list[-1].length
+#
+# print("MINIMUM : ", mini)
 
 
 

@@ -284,6 +284,59 @@ class Cross:
                 if arriving_vehicle != None and arriving_vehicle.next_road == vehicle.road:
                     arriving_vehicle.change_leader(vehicle)
 
+    def decision_maker(self,veh):
+
+        decision = False
+        if veh.road in self.priority_axis:
+            if veh.next_road in self.priority_axis:
+                if veh.leader != veh.next_road.last_vehicle(self):
+                    veh.change_leader(veh.next_road.last_vehicle(self))
+                decision = True # Return decision but not change speed
+
+            else:
+                veh.turn_speed() # TODO : can reduce speed later ?
+                if veh.next_road == self.roads[(self.roads.index(veh.road)+1)%len(self.roads)]: # Turning left
+                    front_road = self.priority_axis[1] if veh.road == self.priority_axis[0] else self.priority_axis[0]
+                    front_veh = front_road.first_vehicle(self)
+                    if front_veh == None or veh.time_to_cross() < front_veh.time_to_cross():
+                        decision = True
+                    else:
+                        if veh == veh.road.first_vehicle(self):
+                            veh.change_leader(FakeLeader(veh.road.length))
+                        return False
+                else: # Turning right
+                    decision = True
+
+        else: # veh.road not in priority_axis
+            veh.turn_speed()
+            if veh.next_road == self.roads[(self.roads.index(veh.road)-1)%len(self.roads)]: # Turning right
+                left_veh = self.roads[(self.roads.index(veh.road)+1)%len(self.roads)].first_vehicle(self)
+                if left_veh == None or veh.time_to_cross() < left_veh.time_to_cross():
+                    decision = True
+                else:
+                    if veh == veh.road.first_vehicle(self):
+                        veh.change_leader(FakeLeader(veh.road.length))
+                    return False
+            elif veh.next_road == self.roads[(self.roads.index(veh.road)+1)%len(self.roads)]: # Turning left
+                right_veh = self.roads[(self.roads.index(veh.road)-1)%len(self.roads)].first_vehicle(self)
+                left_veh = self.roads[(self.roads.index(veh.road)+1)%len(self.roads)].first_vehicle(self)
+                if left_veh == None or veh.time_to_cross() < left_veh.time_to_cross():
+                    if right_veh == None or veh.time_to_cross() < rigth_veh.time_to_cross():
+                        if len(self.roads) == 4:
+                            front_road = self.roads[(self.roads.index(veh.road)+2)%len(self.roads)].first_vehicle(self)
+                            front_veh = front_road.first_vehicle(self)
+                            if front_veh == None or veh.time_to_cross() < front_veh.time_to_cross():
+                                decision = True
+                        else:
+                            decision = True
+                    else:
+                        if veh == veh.road.first_vehicle(self):
+                            veh.change_leader(FakeLeader(veh.road.length))
+                        return False
+
+
+
+
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
 
@@ -379,6 +432,19 @@ class Vehicle:
         self.x = 0 # Position of the vehicle on the road
         self.v = 0 # Speed of the vehicule
 
+    def turn_speed(self):
+        """Give the recommended speed when changing road
+        f(0) = 0, f(PI/2) = 15/50, f(PI) = 1"""
+        if self.next_road != None:
+            angle = abs(self.next_road.angle - self.road.angle) % 3.1415
+            if angle < 0.01:
+                angle = 3.1415
+            return (0.08 *angle*angle + 0.06 * angle) * self.road.speed_limit
+        return veh.road.speed_limit
+
+    def time_to_cross(self):
+        return (self.road.length - self.x)/self.v
+
     def destroy(self):
         print("DELETE")
         vehicle_to_delete.append(self)
@@ -386,7 +452,7 @@ class Vehicle:
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
-        if not (type(vehicle) is Vehicle or vehicle == None):
+        if not isinstance(vehicle, Vehicle) or vehicle == None:
             raise NotVehicleError
         self.leader = vehicle
 
@@ -442,3 +508,9 @@ class Vehicle:
                 return max(-self.b_max, a_free + a * (1 - z**2))
             else:
                 return max(-self.b_max,a_free)
+
+class FakeLeader(Vehicle):
+    """Ahaha"""
+    def __init__(self,x):
+        veh.x = x + 4
+        veh.v = 0
