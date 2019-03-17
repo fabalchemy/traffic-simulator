@@ -32,6 +32,9 @@ def next_steps(dt_d, steps):
             veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
             veh.v = max(0, veh.v + a*dt)
 
+            if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30):
+                veh.destination_cross.decision_maker(veh)
+
         # Check if the vehicles must change road
         for road in road_list:
             road.outgoing_veh(road.first_vehicle(road.cross1))
@@ -49,7 +52,7 @@ def next_steps(dt_d, steps):
 def update():
     global delai
     T = perf_counter()
-    if gui.controls.play.get() == True:
+    if gui.controls.play.get():
         next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicle_list)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")

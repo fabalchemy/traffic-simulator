@@ -10,14 +10,14 @@ def copy_list(a):
             b[i].append(a[i][j])
     return b
 
-default_dispatch_3=[[0   , 0.2 , 0.8],
-                    [0.5 , 0   , 0.5],
-                    [0.8 , 0.2 , 0  ]]
+default_dispatch_3=[[0   , 0.35, 0.65],
+                    [0.5 , 0   , 0.5 ],
+                    [0.65, 0.35, 0   ]]
 
-default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
-                    [0.4 , 0   , 0.4 , 0.2 ],
-                    [0.7 , 0.15, 0   , 0.15],
-                    [0.4 , 0.2 , 0.4 , 0   ]]
+default_dispatch_4=[[0   , 0.2, 0.6 , 0.2],
+                    [0.4 , 0  , 0.4 , 0.2],
+                    [0.6 , 0.2, 0   , 0.2],
+                    [0.4 , 0.2, 0.4 , 0  ]]
 disp = {1: None, 2: None, 3:default_dispatch_3, 4:default_dispatch_4}
 
 
@@ -28,7 +28,7 @@ for i in range(len(cross_coords)):
     cross_list.append(Cross(cross_coords[i],i))
 
 for coords in generator_cross_coords:
-    gen = GeneratorCross(coords = coords, time_lapse = 4)
+    gen = GeneratorCross(coords = coords, time_lapse = 3)
     generator_list.append(gen)
     cross_list.append(gen)
 

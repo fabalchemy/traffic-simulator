@@ -87,6 +87,17 @@ class Map(tk.Canvas):
             else:
                 self.coords(veh.rep, points)
 
+            if veh.v < 10/3.6:
+                self.itemconfig(veh.rep, fill="steel blue")
+            elif veh.v < 20/3.6:
+                self.itemconfig(veh.rep, fill="cyan")
+            elif veh.v < 30/3.6:
+                self.itemconfig(veh.rep, fill="yellow")
+            elif veh.v < 40/3.6:
+                self.itemconfig(veh.rep, fill="orange")
+            else:
+                self.itemconfig(veh.rep, fill="red")
+
 class Container(tk.Frame):
     def __init__(self, root):
         # Initialize a Frame
@@ -140,7 +151,7 @@ class Controls(tk.Frame):
 
 def keyboard_listener(event):
     if event.char == " ":
-        controls.play.set(False) if controls.play.get() == True else controls.play.set(True)
+        controls.play.set(False) if controls.play.get() else controls.play.set(True)
 
     elif event.keysym == "Right":
         map.scan_mark(0,0)
