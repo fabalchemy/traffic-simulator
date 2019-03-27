@@ -5,21 +5,18 @@ W, H = 4000, 2500
 marge = 5000
 dx,dy = 20,20 # Elementary move for the canvas
 
+
 class Map(tk.Canvas):
     def __init__(self, master, width, height, background):
         # Initialize a canvas
         tk.Canvas.__init__(self, master=master, width=width, height=height, background=background)
         self.configure(scrollregion=(-marge, -marge, marge, marge))
+        self.configure(xscrollincrement=1)
+        self.configure(yscrollincrement=1)
         self.create_rectangle(-50,-50,W-1, H-1, tags="container")
-
-        # Enable scrolling with the mouse:
-        self.bind("<ButtonPress-1>", self.scroll_start)
-        self.bind("<B1-Motion>", self.scroll_move)
 
         # Keep track of the current scale to make correct operations when zoomed in or out
         self.current_scale = 1
-        self.configure(xscrollincrement=1)
-        self.configure(yscrollincrement=1)
 
     def scroll_start(self, event):
         # Save the current position of the map
@@ -31,9 +28,10 @@ class Map(tk.Canvas):
 
     def zoom(self, event):
         # Zoom in if the user scrolls up, zoom out otherwise
+        factor = 0
         if event.delta > 0 or event.keysym == "Up":
             factor = 2
-        elif event.delta <= 0 or event.keysym == "Down":
+        elif event.delta < 0 or event.keysym == "Down":
             factor = .5
 
         # Scale every object on the canvas by (factor)
@@ -103,7 +101,7 @@ class Container(tk.Frame):
         # Initialize a Frame
         tk.Frame.__init__(self, root)
         # Initialize the canvas representating the map
-        self.map = Map(self, W, H, "SeaGreen2")
+        self.map = Map(self, W, H, "SeaGreen1")
         self.map.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Setting up scrollbars to be able to move the map in the window
@@ -148,7 +146,6 @@ class Controls(tk.Frame):
         self.nb_veh.set(0)
         tk.Label(master = self.information, textvariable = self.nb_veh).pack(side = tk.LEFT)
 
-
 def keyboard_listener(event):
     if event.char == " ":
         controls.play.set(False) if controls.play.get() else controls.play.set(True)
@@ -169,10 +166,6 @@ def keyboard_listener(event):
         map.scan_mark(0,0)
         map.scan_dragto(0,-int(dy//map.current_scale))
 
-
-
-
-# Create a window
 root = tk.Tk()
 container = Container(root)
 container.grid(row=0, column=0, sticky="nsew")
@@ -184,6 +177,8 @@ controls = Controls(root)
 controls.grid(row=0, column=1, sticky="ne")
 
 # Event-listeners
-map.bind("<MouseWheel>", map.zoom)
 root.bind("<KeyPress>", keyboard_listener)
-root.bind("<Control-Key>",map.zoom)
+map.bind("<ButtonPress-1>", map.scroll_start)
+map.bind("<B1-Motion>", map.scroll_move)
+map.bind("<MouseWheel>", map.zoom)
+root.bind("<Control-Key>", map.zoom)
