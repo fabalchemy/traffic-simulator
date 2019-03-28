@@ -490,8 +490,10 @@ class Vehicle:
 
     def a_free(self, v):
         """Return the freeway acceleration (with no car ahead)"""
-        if v <= self.v0 :
+        if v < self.v0 :
             return self.a * (1 - pow(v/self.v0,self.delta))
+        elif v == 0 :
+            return 0
         else:
             return -self.b * (1 - pow(self.v0/v, self.a*self.delta/self.b))
 
