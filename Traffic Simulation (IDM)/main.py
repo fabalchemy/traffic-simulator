@@ -10,8 +10,6 @@ t = decimal.Decimal(0)
 dtd = decimal.Decimal(1)/decimal.Decimal(10)
 dt = float(dtd)
 
-generate()
-
 while t < 100:
     file.write(str(t) + "\n")
     veh1 = C[0].generate(t)

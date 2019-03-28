@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map0 import *
+from map1 import *
 from time import *
 from math import exp
 
@@ -13,14 +13,15 @@ dt_s = decimal.Decimal(1)/decimal.Decimal(100)
 dt_g = 40 # [ms] # Time interval for graphic update()
 
 delai = 0
+average_speed = 0
 
 def next_steps(dt_d, steps):
     T = perf_counter()
     global t
+    global average_speed
     dt = float(dt_d)
     for i in range(steps):
-        # file.write(str(t) + "\n")
-
+        average_speed = 0
         # Generate vehicles
         for gen in generator_list:
             veh = gen.generate(t)
@@ -31,6 +32,7 @@ def next_steps(dt_d, steps):
                 a = veh.acceleration()
                 veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)
+                average_speed += veh.v
 
                 if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30):
                     veh.destination_cross.decision_maker(veh)
@@ -41,6 +43,7 @@ def next_steps(dt_d, steps):
                 print("> Leader: Road ID: {}, Next road ID: {}\n> Leader parameters: a = {}, v = {}, x = {}".format(veh.leader.road.id,leader_next_road_id,veh.leader.a,veh.leader.v,veh.leader.x))
                 raise
 
+        average_speed = (average_speed / len(vehicle_list))* 3.6
         # Check if the vehicles must change road
         for road in road_list:
             road.outgoing_veh(road.first_vehicle(road.cross1))
@@ -57,6 +60,7 @@ def next_steps(dt_d, steps):
 
 def update():
     global delai
+    global average_speed
     T = perf_counter()
     if gui.controls.play.get():
         next_steps(decimal.Decimal(dt_g/1000*gui.controls.speed.get()), 1) # less precise but faster
@@ -64,6 +68,7 @@ def update():
         gui.map.draw_vehicle(vehicle_list)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
         gui.controls.nb_veh.set(len(vehicle_list))
+        gui.controls.avg_speed.set("{:.4f}".format(average_speed))
         delai += perf_counter() - T + delai
         gui.map.after(int(dt_g * exp(-delai*1000/dt_g)), update)
     else:

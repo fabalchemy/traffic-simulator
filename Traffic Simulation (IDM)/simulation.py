@@ -70,6 +70,7 @@ class Road:
         if origin_cross not in [self.cross1,self.cross2]:
             raise NotLinkedCross
         if x > self.length:
+            print("ROAD = {}, ROAD LENGTH = {}, RECEIVED ABSCISSA = {}".format(self.id,self.length,x))
             raise ValueError("Incoming abscissa is too high")
 
         vehicle.change_leader(self.last_vehicle(origin_cross))
@@ -204,7 +205,7 @@ class Cross:
         # Re-arrange the roads so that priority_axis are on indexes 0 and 2
         # only for 3 and 4-road crosses
         if len(self.roads) > 2:
-            if not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
+            while not (self.priority_axis[0] in (self.roads[0], self.roads[2]) and self.priority_axis[1] in (self.roads[0], self.roads[2])):
                 self.roads.append(self.roads.pop(0))
 
     def transfer_vehicle(self, vehicle, next_road, x=0):
@@ -278,7 +279,7 @@ class Cross:
     def decision_maker(self,veh):
 
         if type(veh.destination_cross) is not GeneratorCross and len(self.roads)>2:
-            SECURITY_GAP = 2
+            SECURITY_GAP = 3
             decision = False
             if veh.road in self.priority_axis:
                 if veh.next_road in self.priority_axis:
@@ -369,12 +370,12 @@ class GeneratorCross(Cross):
             self.time_lapse += self.rand_time_lapse
 
         if (t - self.last_t) >= self.rand_time_lapse :
-            if (vehicle_ahead == None or vehicle_ahead.x > (self.roads[0].speed_limit**2)/(2*vehicle_ahead.b_max) + vehicle_ahead.s0):
+            veh_type = "car" if random() < 0.93 else "truck"
+            if (vehicle_ahead == None or vehicle_ahead.x > (self.roads[0].speed_limit**2)/(2*Vehicle.VEH_B_MAX[veh_type]) + vehicle_ahead.s0 + (vehicle_ahead.length + Vehicle.VEH_LENGTH[veh_type])/2):
                 leader = self.roads[0].last_vehicle(self)
                 if leader == None or leader.x >= leader.s0:
                     self.last_t = t
 
-                    veh_type = "car" if random() < 1 else "truck"
                     new_vehicle = Vehicle(road, self, vehicle_type = veh_type)
                     vehicle_list.append(new_vehicle)
                     new_vehicle.leader = leader
@@ -386,7 +387,10 @@ class GeneratorCross(Cross):
 class Vehicle:
     """Representation of a vehicle"""
 
-    def __init__(self, road, origin_cross, T = 2, s0 = 5.5, a = 2, vehicle_type = "car", b = 1.5):
+    VEH_LENGTH = {"car": 4, "truck": 10}
+    VEH_B_MAX = {"car": 10, "truck": 5}
+
+    def __init__(self, road, origin_cross, T = 2, s0 = 2, a = 2, vehicle_type = "car", b = 1.5):
         """road : Road on which the car is summoned
         origin_cross : Cross by where the car enter on the road
         T : Desired time headway [s]
@@ -417,7 +421,6 @@ class Vehicle:
         self.leader = None
         self.s0 = s0
         self.delta = 4
-        self.a = a # Acceleration
         self.b = b
         self.x = 0 # Position of the vehicle on the road
         self.v = 0 # Speed of the vehicle
@@ -425,15 +428,17 @@ class Vehicle:
         self.rep = None # Index for graphic representation
 
         if vehicle_type == "car": # It's a car
-            self.b_max = 10 # Maximum vehicle deceleration (in case of danger ahead)
-            self.length = 4
+            self.a = a # Acceleration
+            self.b_max = Vehicle.VEH_B_MAX[vehicle_type] # Maximum vehicle deceleration (in case of danger ahead)
+            self.length = Vehicle.VEH_LENGTH["car"]
             self.width = 2
         elif vehicle_type == "truck" : # It's a truck
-            self.b_max = 5
-            self.length = 16
+            self.a = 1
+            self.b_max = Vehicle.VEH_B_MAX[vehicle_type]
+            self.length = Vehicle.VEH_LENGTH["truck"]
             self.width = 2.5
         else:
-            raise TypeError("Non existing vehicle, car or truck ?")
+            raise TypeError("Non existing type of vehicle, car or truck ?")
 
         # TODO: Implement some variation for v0 speed (pushy or safe driver)
         self.v0 = road.speed_limit # v0 = desired speed (generally the speed limit)
@@ -471,9 +476,9 @@ class Vehicle:
             return 250
         else:
             if type(self.leader) is FakeLeader or self.leader.road != self.road:
-                return self.road.length - self.x + self.leader.x
+                return self.road.length - self.x + self.leader.x - (self.leader.length + self.length)/2
             else:
-                return self.leader.x - self.x
+                return self.leader.x - self.x - (self.leader.length + self.length)/2
 
     def speed_of_leader(self):
         """Return the speed of the leader, if it exists
@@ -522,3 +527,4 @@ class FakeLeader(Vehicle):
     def __init__(self,x):
         self.x = x + 6
         self.v = 0
+        self.length = 4

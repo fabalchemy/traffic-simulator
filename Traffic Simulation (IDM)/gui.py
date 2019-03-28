@@ -1,5 +1,5 @@
 import tkinter as tk
-from math import cos, sin
+from math import cos, sin, atan, sqrt
 
 W, H = 4000, 2500
 marge = 5000
@@ -65,11 +65,11 @@ class Map(tk.Canvas):
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
             (x0,y0) = veh.origin_cross.coords
-            rw = veh.road.width
+            road_width = veh.road.width
             (l, w) = (veh.length, veh.width)
             angle = veh.road.angle if (veh.origin_cross==veh.road.cross1) else (veh.road.angle + 3.1415)
-            x = x0 - rw/4 *sin(angle) + veh.x*cos(angle)
-            y = y0 + rw/4 *cos(angle) + veh.x*sin(angle)
+            x = x0 - road_width/4 *sin(angle) + (veh.x+veh.length/2)*cos(angle)
+            y = y0 + road_width/4 *cos(angle) + (veh.x+veh.length/2)*sin(angle)
 
             e = self.current_scale
             x = x*e
@@ -141,10 +141,14 @@ class Controls(tk.Frame):
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
         self.information.pack()
-        tk.Label(master = self.information, text = "Nombre de voitures : ").pack(side = tk.LEFT)
+        tk.Label(master = self.information, text = "Nombre de véhicules : ").grid(row = 0, column = 0)
         self.nb_veh = tk.IntVar()
         self.nb_veh.set(0)
-        tk.Label(master = self.information, textvariable = self.nb_veh).pack(side = tk.LEFT)
+        tk.Label(master = self.information, textvariable = self.nb_veh).grid(row = 0, column = 1)
+        self.avg_speed = tk.StringVar()
+        self.avg_speed.set("0")
+        tk.Label(master = self.information, text="Average speed : ").grid(row = 1, column = 0)
+        tk.Label(master = self.information, textvariable = self.avg_speed).grid(row = 1, column = 1)
 
 def keyboard_listener(event):
     if event.char == " ":
@@ -167,6 +171,7 @@ def keyboard_listener(event):
         map.scan_dragto(0,-int(dy//map.current_scale))
 
 root = tk.Tk()
+root.state('zoomed')
 container = Container(root)
 container.grid(row=0, column=0, sticky="nsew")
 map = container.map
