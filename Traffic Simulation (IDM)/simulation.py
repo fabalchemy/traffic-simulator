@@ -279,7 +279,7 @@ class Cross:
     def decision_maker(self,veh):
 
         if type(veh.destination_cross) is not GeneratorCross and len(self.roads)>2:
-            SECURITY_GAP = 3
+            SECURITY_GAP = 5
             decision = False
             if veh.road in self.priority_axis:
                 if veh.next_road in self.priority_axis:
@@ -454,7 +454,11 @@ class Vehicle:
 
     def time_to_cross(self):
         if self.v > 0.01:
-            return (self.road.length - self.x)/self.v
+            d_to_cross = self.road.length - self.x
+            T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
+            d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
+            T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
+            return T_slow_down
         else:
             return 2 # arbitrary constant
 
