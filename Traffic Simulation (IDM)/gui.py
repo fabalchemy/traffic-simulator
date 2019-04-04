@@ -34,17 +34,18 @@ class Map(tk.Canvas):
         elif event.delta < 0 or event.keysym == "Down":
             factor = .5
 
-        # Scale every object on the canvas by (factor)
-        self.scale("all", 0,0 , factor, factor)
-        self.current_scale *= factor
-        marge = self.current_scale * 5000
+        if factor != 0:
+            # Scale every object on the canvas by (factor)
+            self.scale("all", 0,0 , factor, factor)
+            self.current_scale *= factor
+            marge = self.current_scale * 5000
 
-        # Reconfiguration for the scrollbars
-        self.configure(scrollregion=(-marge, -marge, marge, marge))
-        x,y = self.canvasx(event.x), self.canvasy(event.y)
+            # Reconfiguration for the scrollbars
+            self.configure(scrollregion=(-marge, -marge, marge, marge))
+            x,y = self.canvasx(event.x), self.canvasy(event.y)
 
-        self.xview_scroll(int(x*(factor-1)), "units")
-        self.yview_scroll(int(y*(factor-1)), "units")
+            self.xview_scroll(int(x*(factor-1)), "units")
+            self.yview_scroll(int(y*(factor-1)), "units")
 
     def draw_cross(self, cross_list):
         for cross in cross_list:

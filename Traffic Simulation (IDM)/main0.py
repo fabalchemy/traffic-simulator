@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map1 import *
+from map0 import *
 from time import *
 from math import exp
 
@@ -34,8 +34,9 @@ def next_steps(dt_d, steps):
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 0):
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.decision == False :
                     veh.destination_cross.decision_maker(veh)
+
             except:
                 next_road_id = veh.next_road.id if veh.next_road != None else None
                 leader_next_road_id = veh.leader.next_road.id if veh.leader.next_road != None else None
@@ -64,8 +65,8 @@ def update():
     global average_speed
     T = perf_counter()
     if gui.controls.play.get():
-        next_steps(decimal.Decimal(dt_g/1000*gui.controls.speed.get()), 1) # less precise but faster
-        # next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
+        # next_steps(decimal.Decimal(dt_g/1000*gui.controls.speed.get()), 1) # less precise but faster
+        next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicle_list)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
         gui.controls.nb_veh.set(len(vehicle_list))
