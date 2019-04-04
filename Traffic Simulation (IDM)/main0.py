@@ -29,12 +29,12 @@ def next_steps(dt_d, steps):
         # Update acceleration, speed and position of each vehicle
         for veh in vehicle_list:
             try:
-                a = veh.acceleration_IDM()
+                a = veh.acceleration_IIDM()
                 veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30):
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 0):
                     veh.destination_cross.decision_maker(veh)
             except:
                 next_road_id = veh.next_road.id if veh.next_road != None else None
@@ -43,7 +43,8 @@ def next_steps(dt_d, steps):
                 print("> Leader: Road ID: {}, Next road ID: {}\n> Leader parameters: a = {}, v = {}, x = {}".format(veh.leader.road.id,leader_next_road_id,veh.leader.a,veh.leader.v,veh.leader.x))
                 raise
 
-        average_speed = (average_speed / len(vehicle_list))* 3.6
+        average_speed = (average_speed / len(vehicle_list)) * 3.6
+
         # Check if the vehicles must change road
         for road in road_list:
             road.outgoing_veh(road.first_vehicle(road.cross1))

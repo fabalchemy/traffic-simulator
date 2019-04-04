@@ -507,7 +507,7 @@ class Vehicle:
         delta_v = v - self.speed_of_leader()
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) /s
 
-    def acceleration(self):
+    def acceleration_IIDM(self):
         """Return the global acceleration"""
         v = self.v
         z = self.z(v)
@@ -528,9 +528,27 @@ class Vehicle:
     def acceleration_IDM(self):
         return self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2)
 
+    def acceleration_RAVTR(self):
+        b_f = - self.b
+        b_l = - self.b if self.leader == None else - self.leader.b
+        v_f = self.v
+        v_l = self.speed_of_leader()
+        s_0 = self.s0
+        s = self.spacing_with_leader()
+        tau = 1
+
+        if v_f < self.v0:
+            a_f = (b_f*tau - 2*v_f - 2*b_f*sqrt((b_f*b_l*tau*tau + 4*b_l*v_f*tau+4*v_l*v_l-8*b_l*(s-s_0))/(4*b_f*b_l)))/(2*tau)
+        else:
+            a_f = 0
+        return max(-self.b_max, a_f)
+
 class FakeLeader(Vehicle):
     """Ahaha"""
     def __init__(self,x):
         self.x = x + 6
         self.v = 0
         self.length = 4
+        self.next_road = None
+        self.road = None
+        self.b = 2

@@ -49,7 +49,7 @@ class Map(tk.Canvas):
     def draw_cross(self, cross_list):
         for cross in cross_list:
             (x,y) = cross.coords
-            self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey26", outline = "grey26", tag="cross")
+            self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey20", outline = "grey30", tag="cross")
 
     def draw_road(self, road_list):
         for road in road_list:
@@ -60,7 +60,7 @@ class Map(tk.Canvas):
             dy = - cos(ang)*w/2
             dxb = -l*cos(ang)
             dyb = -l*sin(ang)
-            self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill="grey26", tag="road")
+            self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill="grey20", tag="road")
 
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
@@ -101,7 +101,7 @@ class Container(tk.Frame):
         # Initialize a Frame
         tk.Frame.__init__(self, root)
         # Initialize the canvas representating the map
-        self.map = Map(self, W, H, "SeaGreen1")
+        self.map = Map(self, W, H, "#78e08f")
         self.map.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Setting up scrollbars to be able to move the map in the window

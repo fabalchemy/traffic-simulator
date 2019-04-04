@@ -7,7 +7,7 @@ file = open("results.txt", "w")
 
 decimal.getcontext().prec = 4
 t = decimal.Decimal(0)
-dtd = decimal.Decimal(1)/decimal.Decimal(10)
+dtd = decimal.Decimal(1)/decimal.Decimal(100)
 dt = float(dtd)
 
 c1 = Cross((0,0))
@@ -18,7 +18,7 @@ while t < 100:
 
     file.write(str(t) + "\n")
 
-    a = veh1.acceleration()
+    a = veh1.acceleration_IDM()
     veh1.x = veh1.x + veh1.v*dt + max(0, 0.5*a*dt*dt)
     veh1.v = max(0, veh1.v + a*dt)
     # write the results in a file
