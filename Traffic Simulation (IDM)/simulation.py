@@ -48,7 +48,7 @@ class Road:
         x2,y2 = cross2.coords
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.angle = angle(x2-x1, y2-y1)
-        print("Road : ", self.id, "angle : ", self.angle)
+        # print("Road : ", self.id, "angle : ", self.angle)
         self.width = 5
 
         cross1.add_road(self)
@@ -57,13 +57,13 @@ class Road:
         self.vehicle_list_12 = list()
         self.vehicle_list_21 = list()
 
-    def incoming_veh(self, vehicle, origin_cross, x = 0):
+    def incoming_veh(self, veh, origin_cross, x = 0):
         """Incoming vehicle on the road from origin_cross
         x is the position of the vehicle on the road when arriving
         (useful when vehicles come from another road with a certain speed)"""
 
         # We check the paramaters
-        if type(vehicle) is not Vehicle:
+        if type(veh) is not Vehicle:
             raise notVehicleError
         if not isinstance(origin_cross, Cross):
             raise notCrossError
@@ -73,56 +73,60 @@ class Road:
             print("ROAD = {}, ROAD LENGTH = {}, RECEIVED ABSCISSA = {}".format(self.id,self.length,x))
             raise ValueError("Incoming abscissa is too high")
 
-        vehicle.change_leader(self.last_vehicle(origin_cross))
+        veh.change_leader(self.last_vehicle(origin_cross))
 
         # We add the vehicle at the beginning of the road, in the corresponding direction
         if origin_cross == self.cross1:
-            self.vehicle_list_12.append(vehicle)
-            vehicle.destination_cross = self.cross2
+            self.vehicle_list_12.append(veh)
+            veh.destination_cross = self.cross2
         else:
-            self.vehicle_list_21.append(vehicle)
-            vehicle.destination_cross = self.cross1
+            self.vehicle_list_21.append(veh)
+            veh.destination_cross = self.cross1
 
-        vehicle.x = x
-        vehicle.road = self
-        vehicle.origin_cross = origin_cross
-        vehicle.v0 = self.speed_limit
+        veh.x = x
+        veh.road = self
+        veh.origin_cross = origin_cross
+        veh.v0 = self.speed_limit
+
+        # We reset parameters relative to cross priority (crossing_order)
+        veh.crossing_order = None
+        veh.cross_speed_taken = False
 
         # We choose the next road
-        vehicle.next_road = vehicle.destination_cross.choose_direction(self)
+        veh.next_road = veh.destination_cross.choose_direction(self)
 
-    def outgoing_veh(self, vehicle):
+    def outgoing_veh(self, veh):
         """Outgoing vehicle of the road"""
-        if vehicle != None:
-            destination_cross = vehicle.destination_cross
+        if veh != None:
+            destination_cross = veh.destination_cross
 
-            if type(vehicle) is not Vehicle:
+            if type(veh) is not Vehicle:
                 raise notVehicleError
 
-            if vehicle.x > self.length:
-                if vehicle in self.vehicle_list_12:
+            if veh.x > self.length:
+                if veh in self.vehicle_list_12:
                     if type(destination_cross) is GeneratorCross:
                         del self.vehicle_list_12[0]
-                        vehicle.destroy()
+                        veh.destroy()
                         # Update follower's leader to None
                         if len(self.vehicle_list_12) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
                     else:
-                        destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), vehicle.next_road, vehicle.x - self.length)
+                        destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), veh.next_road, veh.x - self.length)
                         # if len(self.vehicle_list_12)>0:
-                        #     destination_cross.new_leader(vehicle) # Alert vehicles arrving next to it that it's their new leader
+                        #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
-                elif vehicle in self.vehicle_list_21:
+                elif veh in self.vehicle_list_21:
                     if type(destination_cross) is GeneratorCross:
                         del self.vehicle_list_21[0]
-                        vehicle.destroy()
+                        veh.destroy()
                         # Update follower's leader to None
                         if len(self.vehicle_list_21) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
                     else:
-                        destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), vehicle.next_road, vehicle.x - self.length)
+                        destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), veh.next_road, veh.x - self.length)
                         # if len(self.vehicle_list_21)>0:
-                        #     destination_cross.new_leader(vehicle) # Alert vehicles arrving next to it that it's their new leader
+                        #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
                 else:
                     raise ValueError("Vehicle not on this road")
@@ -166,6 +170,9 @@ class Cross:
         self.coords = coords
         self.roads = list()
         self.id = id
+
+        self.crossing_order_list = []
+
 
     def add_road(self, road):
         """Connects the road to the cross, adding it to self.roads"""
@@ -281,7 +288,7 @@ class Cross:
                 if arriving_vehicle != None and arriving_vehicle.next_road == vehicle.road:
                     arriving_vehicle.change_leader(vehicle)
 
-    def decision_maker(self,veh):
+    def decision_maker_old(self,veh):
         SECURITY_GAP = 8
         decision = False
 
@@ -348,10 +355,41 @@ class Cross:
             veh.decision = decision
 
 
+    def decision_maker(self):
+        SECURITY_GAP = 4
+
+        veh_list = []
+        for i in range(len(self.roads)):
+            veh = self.roads[i].first_vehicle(self)
+            if type(veh) is Vehicle: # != None: ## DEBUG: manage the case of veh is FakeLeader ??
+                time_to_cross = veh.time_to_cross() + SECURITY_GAP *(i%2)
+                # We add a SECURITY_GAP if the vehicle is not coming from a priority_axis
+
+                veh_list.append((time_to_cross,veh))
+
+        self.crossing_order_list = sorted(veh_list, key=lambda x:x[0])
+        veh_list = self.crossing_order_list
+
+        if len(veh_list) > 0:
+            # if type(veh_list[0][1].leader) is not Vehicle:
+            veh_list[0][1].change_leader(veh_list[0][1].next_road.last_vehicle(self))
+
+            for i in range(len(veh_list)):
+                veh_list[i][1].crossing_order = i
+                if i != 0:
+                    if self.id == 39:
+                        print("Cross = {}, Nb veh arriving = {}".format(self.id, len(veh_list)))
+                    if veh_list[i][1].d_to_cross() < veh_list[i-1][1].d_to_cross():
+                        veh_list[i][1].change_leader(Stop(veh_list[i][1].road.length))
+                    else:
+                        veh_list[i][1].change_leader(FakeLeader(veh_list[i-1][1], self.crossing_order_list[i][1].road))
+
+
+
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/of the map"""
 
-    rand_gap = 4
+    RAND_GAP = 6 # Bigger this constant is, more random is the generation of vehicles
 
     def __init__(self,coords,time_lapse):
         """coords : (x,y) coordinates
@@ -376,7 +414,7 @@ class GeneratorCross(Cross):
         vehicle_ahead = self.roads[0].last_vehicle(self)
 
         if self.rand_time_lapse  == None:
-            self.rand_time_lapse = randint(-GeneratorCross.rand_gap, GeneratorCross.rand_gap)
+            self.rand_time_lapse = randint(-GeneratorCross.RAND_GAP, GeneratorCross.RAND_GAP)
             self.time_lapse += self.rand_time_lapse
 
         if (t - self.last_t) >= self.rand_time_lapse :
@@ -436,6 +474,8 @@ class Vehicle:
         self.v = 0 # Speed of the vehicle
 
         self.decision = False # Approbation to cross the next intersection
+        self.crossing_order = None # Crossing order at the next Cross
+        self.cross_speed_taken = False #True if the vehicle has taken its turn_speed for the next cross, False if not
         self.rep = None # Index for graphic representation
 
         if vehicle_type == "car": # It's a car
@@ -462,6 +502,7 @@ class Vehicle:
             if angle < 0.01:
                 angle = 3.1415
             self.v0 = (0.08 *angle*angle + 0.06 * angle) * self.road.speed_limit
+            self.cross_speed_taken = True
 
     def time_to_cross(self):
         if self.v > 0.01:
@@ -469,13 +510,19 @@ class Vehicle:
             T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
             d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
             T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
-            return T_slow_down
+            return T_to_cross
         else:
             return 2 # arbitrary constant
 
     def destroy(self):
         vehicle_to_delete.append(self)
         vehicle_list.remove(self)
+
+    def d_to_cross(self):
+        if type(self) is FakeLeader:
+            return self.real_veh.d_to_cross()
+        else:
+            return self.road.length - self.x
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
@@ -491,10 +538,12 @@ class Vehicle:
             return 250
         else:
             if type(self.leader) == FakeLeader:
-                return self.road.length - (self.leader.real_veh.road.length - self.leader.real_veh.x) - self.x
+                if self.leader.real_veh.road != self.road:
+                    return self.leader.real_veh.x + self.d_to_cross()
+                return self.leader.d_to_cross() - self.d_to_cross()
 
-            elif type(self.leader) is Stop or  self.leader.road == self.road:
-                return self.leader.x - self.x - (self.leader.length + self.length)/2
+            elif type(self.leader) is Stop or self.leader.road == self.road:
+                return max(0.1,self.leader.x - self.x - (self.leader.length + self.length)/2) # DEBUG: max to delete, only for tests
             else:
                 return self.road.length - self.x + self.leader.x - (self.leader.length + self.length)/2
 
@@ -503,6 +552,8 @@ class Vehicle:
         Otherwise, return the speed of the car to cancel the interaction acceleration"""
         if self.leader == None:
              return self.v
+        elif type(self.leader) is FakeLeader:
+            return self.leader.real_veh.v
         else:
             return self.leader.v
 
@@ -569,5 +620,7 @@ class Stop(Vehicle):
 class FakeLeader(Vehicle):
     """Virtual leader"""
 
-    def __init__(self,veh):
+    def __init__(self,veh,road):
         self.real_veh = veh
+        self.road = road # BE CAREFUL : This road refers to the follower road !!  (Waiting for a better solution)
+        # self.next_road = self.real_veh.next_road

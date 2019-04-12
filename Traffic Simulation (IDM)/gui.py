@@ -127,7 +127,7 @@ class Controls(tk.Frame):
         self.time_mgmt.pack()
 
         self.time_str = tk.StringVar()
-        self.time_str.set("Current time : 0 s.")
+        self.time_str.set("Current time: 0 s.")
         tk.Label(master = self.time_mgmt, textvariable = self.time_str).pack()
         self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=30, resolution=0.1, orient=tk.HORIZONTAL, length=200)
         self.speed.set(1)
@@ -142,13 +142,13 @@ class Controls(tk.Frame):
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
         self.information.pack()
-        tk.Label(master = self.information, text = "Nombre de véhicules : ").grid(row = 0, column = 0)
+        tk.Label(master = self.information, text = "Number of vehicles: ").grid(row = 0, column = 0)
         self.nb_veh = tk.IntVar()
         self.nb_veh.set(0)
         tk.Label(master = self.information, textvariable = self.nb_veh).grid(row = 0, column = 1)
         self.avg_speed = tk.StringVar()
         self.avg_speed.set("0")
-        tk.Label(master = self.information, text="Vitesse moyenne : ").grid(row = 1, column = 0)
+        tk.Label(master = self.information, text="Average speed: ").grid(row = 1, column = 0)
         tk.Label(master = self.information, textvariable = self.avg_speed).grid(row = 1, column = 1)
 
 def keyboard_listener(event):

@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map0 import *
+from map1 import *
 from time import *
 from math import exp
 
@@ -26,6 +26,12 @@ def next_steps(dt_d, steps):
         for gen in generator_list:
             veh = gen.generate(t)
 
+        for cross in cross_list:
+            if len(cross.roads) > 2:
+                # if len(cross.crossing_order_list) == 0 or cross.crossing_order_list[0][1].destination_cross != cross or not cross.crossing_order_list[0][1].cross_speed_taken:
+                # or len(cross.crossing_order_list) < len(cross.roads):
+                cross.decision_maker()
+
         # Update acceleration, speed and position of each vehicle
         for veh in vehicle_list:
             try:
@@ -34,17 +40,21 @@ def next_steps(dt_d, steps):
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.decision == False :
-                    veh.destination_cross.decision_maker(veh)
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and not veh.cross_speed_taken:
+                    veh.turn_speed()
 
             except:
                 next_road_id = veh.next_road.id if veh.next_road != None else None
                 leader_next_road_id = veh.leader.next_road.id if veh.leader.next_road != None else None
                 print(" === VEHICLE ERROR ===\n> Road ID: {}, Next road ID: {}\n> Vehicle parameters: a = {}, v = {}, x = {}, spacing_with_leader = {}, z = {}\n".format(veh.road.id,next_road_id,veh.a,veh.v,veh.x,veh.spacing_with_leader(),veh.z(veh.v)))
-                print("> Leader: Road ID: {}, Next road ID: {}\n> Leader parameters: a = {}, v = {}, x = {}".format(veh.leader.road.id,leader_next_road_id,veh.leader.a,veh.leader.v,veh.leader.x))
+                if type(veh.leader) in [FakeLeader,Stop]:
+                    print("> Leader: {}".format(type(veh.leader)))
+                else:
+                    print("> Leader: Road ID: {}, Next road ID: {}\n> Leader parameters: a = {}, v = {}, x = {}".format(veh.leader.road.id,leader_next_road_id,veh.leader.a,veh.leader.v,veh.leader.x))
                 raise
 
-        average_speed = (average_speed / len(vehicle_list)) * 3.6
+        if len(vehicle_list) > 0:
+            average_speed = (average_speed / len(vehicle_list)) * 3.6
 
         # Check if the vehicles must change road
         for road in road_list:
@@ -56,6 +66,7 @@ def next_steps(dt_d, steps):
             vehicle_to_delete.remove(veh)
 
         t+= dt_d
+
 
     global delai
     delai = perf_counter() - T
