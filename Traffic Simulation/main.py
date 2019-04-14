@@ -23,13 +23,17 @@ def next_steps(dt_d, steps):
         average_speed = 0
         # Generate vehicles
         for gen in generators:
-            veh = gen.generate(t)
+            gen.generate(t)
+
+        for cross in crosses:
+            cross.get_intentions()
 
         # Update acceleration, speed and position of each vehicle
         for veh in vehicles:
             try:
                 a = veh.acceleration_IIDM()
-                veh.x = veh.x + veh.v*dt + max(0, 0.5*a*dt*dt)
+                veh.dx += veh.v*dt + max(0, 0.5*a*dt*dt)
+                veh.x += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
@@ -74,6 +78,10 @@ def update():
         gui.controls.nb_veh.set(len(vehicles))
         gui.controls.avg_speed.set("{:.4f}".format(average_speed))
         mouseover()
+        if gui.controls.leadership.get():
+            gui.map.draw_leadership(vehicles)
+        else:
+            gui.map.delete("leadership")
         delay += perf_counter() - T + delay
         gui.map.after(int(dt_g * exp(-delay*1000/dt_g)), update)
     else:
@@ -104,7 +112,7 @@ def mouseover():
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
                     leader_index = None if veh.leader == None else vehicles.index(veh.leader)
-                    txt = txt + "Vehicle {} (going to: {}, leader: {})".format(vehicles.index(veh), next_road_id, leader_index)
+                    txt = txt + "Vehicle {} (speed: {}, going to: {}, leader: {})".format(vehicles.index(veh), veh.v0, next_road_id, leader_index)
                     break
     gui.map.itemconfigure(tag, text=txt)
     gui.map.coords(tag, x+15, y+15)

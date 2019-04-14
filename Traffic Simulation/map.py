@@ -10,12 +10,12 @@ def copy_list(a):
             b[i].append(a[i][j])
     return b
 
-# default_dispatch_3=[[0 , 0 , 1],
-#                     [0 , 0,  1],
-#                     [0 , 1 , 0]]
-default_dispatch_3=[[0   , 0.2 , 0.8],
-                    [0.5 , 0   , 0.5],
-                    [0.8 , 0.2 , 0  ]]
+default_dispatch_3=[[0 , 0 , 1],
+                    [0 , 0,  1],
+                    [0 , 1 , 0]]
+# default_dispatch_3=[[0   , 0.2 , 0.8],
+#                     [0.5 , 0   , 0.5],
+#                     [0.8 , 0.2 , 0  ]]
 
 default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
                     [0.4 , 0   , 0.4 , 0.2 ],
@@ -40,8 +40,8 @@ roads.append(Road(crosses[0], crosses[2], 54/3.6, 1))
 roads.append(Road(crosses[0], crosses[3], 54/3.6, 2))
 # road_list.append(Road(C[0], C[4], 54/3.6))
 
-gui.map.draw_cross(crosses)
 gui.map.draw_road(roads)
+gui.map.draw_cross(crosses)
 
 crosses[0].define_priority_axis((roads[0], roads[1]))
 crosses[0].sort_roads()

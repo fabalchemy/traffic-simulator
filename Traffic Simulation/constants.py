@@ -6,3 +6,11 @@ NotLinkedRoad = ValueError("Input road is not linked to this cross")
 NotLinkedCross = ValueError("Input cross is not linked to this road")
 TooManyRoads = ValueError("Crosses cannot be linked with more than 4 roads")
 WrongAxisFormat = TypeError("axis must be a tuple of 2 roads or None")
+
+GRADIENT = [[0, "#ed1c24"], [0.7, "#f7931e"], [1, "#3d923b"]]
+GRADIENT_1 = [[0, "#9e1313"], [0.3, "#e60000"], [0.6, "#f07d02"], [1, "#84ca50"]]
+
+# BACKGROUND_COLOR = "#f7f7f7"
+BACKGROUND_COLOR = "#e5e5e5"
+ROAD_COLOR = "#ffffff"
+ROAD_OUTLINE_COLOR = "#e5e5e5"

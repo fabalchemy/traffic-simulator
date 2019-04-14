@@ -1,5 +1,7 @@
 import tkinter as tk
+from functions import get_color_from_gradient
 from math import cos, sin, atan, sqrt
+from constants import *
 
 W, H = 4000, 2500
 marge = 5000
@@ -50,7 +52,7 @@ class Map(tk.Canvas):
     def draw_cross(self, cross_list):
         for cross in cross_list:
             (x,y) = cross.coords
-            cross.rep = self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey20", outline = "grey30", tag="cross")
+            cross.rep = self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill=ROAD_COLOR, outline=ROAD_COLOR, tag="cross")
 
     def draw_road(self, road_list):
         for road in road_list:
@@ -61,48 +63,53 @@ class Map(tk.Canvas):
             dy = - cos(ang)*w/2
             dxb = -l*cos(ang)
             dyb = -l*sin(ang)
-            road.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill="grey20", tag="road")
+            road.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill=ROAD_COLOR, outline=ROAD_OUTLINE_COLOR, width = 2, tag="road")
 
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
-            (x0,y0) = veh.origin_cross.coords
-            road_width = veh.road.width
-            (l, w) = (veh.length, veh.width)
             angle = veh.road.angle if (veh.origin_cross==veh.road.cross1) else (veh.road.angle + 3.1415)
-            x = x0 - road_width/4 *sin(angle) + (veh.x+veh.length/2)*cos(angle)
-            y = y0 + road_width/4 *cos(angle) + (veh.x+veh.length/2)*sin(angle)
-
             e = self.current_scale
-            x = x*e
-            y = y*e
-            dx = sin(angle)*w/2 *e
-            dy = - cos(angle)*w/2 *e
-            dxb = - l*cos(angle) *e
-            dyb = - l*sin(angle) *e
+            if veh.changed_road:
+                veh.changed_road = False
+                (x0,y0) = veh.origin_cross.coords
+                road_width = veh.road.width
+                (l, w) = (veh.length, veh.width)
+                x = x0 - road_width/4 *sin(angle) + (veh.x+veh.length/2)*cos(angle)
+                y = y0 + road_width/4 *cos(angle) + (veh.x+veh.length/2)*sin(angle)
 
-            points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
-            if veh.rep == None :
-                veh.rep = self.create_polygon(points, fill="red", tag="vehicle")
-            else:
-                self.coords(veh.rep, points)
+                x = x*e
+                y = y*e
+                dx = sin(angle)*w/2 *e
+                dy = - cos(angle)*w/2 *e
+                dxb = - l*cos(angle) *e
+                dyb = - l*sin(angle) *e
 
-            if veh.v < 10/3.6:
-                self.itemconfig(veh.rep, fill="steel blue")
-            elif veh.v < 20/3.6:
-                self.itemconfig(veh.rep, fill="cyan")
-            elif veh.v < 30/3.6:
-                self.itemconfig(veh.rep, fill="yellow")
-            elif veh.v < 40/3.6:
-                self.itemconfig(veh.rep, fill="orange")
+                points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
+                if veh.rep == None :
+                    veh.rep = self.create_polygon(points, fill=get_color_from_gradient(veh.v/veh.road.speed_limit), tag="vehicle")
+                else:
+                    self.coords(veh.rep, points)
             else:
-                self.itemconfig(veh.rep, fill="red")
+                self.move(veh.rep, veh.dx*cos(angle)*e, veh.dx*sin(angle)*e)
+                veh.dx = 0
+                self.itemconfig(veh.rep, fill=get_color_from_gradient(veh.v/veh.road.speed_limit))
+
+
+
+    def draw_leadership(self, vehicle_list):
+        map.delete("leadership")
+        for veh in vehicle_list:
+            if veh.leader != None:
+                leader_coords = self.coords(veh.leader.rep)
+                follower_coords = self.coords(veh.rep)
+                map.create_line(leader_coords[0], leader_coords[1], follower_coords[0], follower_coords[1], fill="black", width=1, tag="leadership")
 
 class Container(tk.Frame):
     def __init__(self, root):
         # Initialize a Frame
         tk.Frame.__init__(self, root)
         # Initialize the canvas representating the map
-        self.map = Map(self, W, H, "#78e08f")
+        self.map = Map(self, W, H, BACKGROUND_COLOR)
         self.map.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Setting up scrollbars to be able to move the map in the window
@@ -124,12 +131,12 @@ class Controls(tk.Frame):
     def __init__(self, root):
         tk.Frame.__init__(self, root)
         self.time_mgmt = tk.LabelFrame(self, text="Time managment", padx=10, pady= 10)
-        self.time_mgmt.pack()
+        self.time_mgmt.grid(row=0,column=0, sticky="new")
 
         self.time_str = tk.StringVar()
         self.time_str.set("Current time: 0 s.")
         tk.Label(master = self.time_mgmt, textvariable = self.time_str).pack()
-        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=30, resolution=0.1, orient=tk.HORIZONTAL, length=200)
+        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=10, resolution=0.1, orient=tk.HORIZONTAL, length=200)
         self.speed.set(1)
         self.speed.pack(fill="both", expand="yes")
         self.play = tk.BooleanVar()
@@ -141,7 +148,7 @@ class Controls(tk.Frame):
 
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
-        self.information.pack()
+        self.information.grid(row=1,column=0, sticky="new")
         tk.Label(master = self.information, text = "Number of vehicles: ").grid(row = 0, column = 0)
         self.nb_veh = tk.IntVar()
         self.nb_veh.set(0)
@@ -150,6 +157,19 @@ class Controls(tk.Frame):
         self.avg_speed.set("0")
         tk.Label(master = self.information, text="Average speed: ").grid(row = 1, column = 0)
         tk.Label(master = self.information, textvariable = self.avg_speed).grid(row = 1, column = 1)
+
+        self.settings = tk.LabelFrame(self, text="Settings", padx=10, pady=10)
+        self.settings.grid(row=2,column=0, sticky="new")
+
+        tk.Label(master = self.settings, text = "Show leadership relations:").pack()
+        self.leadership = tk.BooleanVar()
+        self.leadership.set(True)
+        self.leadership_true = tk.Radiobutton(self.settings, text="Play", variable=self.leadership, value=True)
+        self.leadership_false = tk.Radiobutton(self.settings, text="Pause", variable=self.leadership, value=False)
+        self.leadership_true.pack(side=tk.LEFT)
+        self.leadership_false.pack(side=tk.LEFT)
+
+
 
 def keyboard_listener(event):
     if event.char == " ":

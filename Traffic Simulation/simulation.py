@@ -33,7 +33,7 @@ class Road:
         x2,y2 = cross2.coords
         self.angle = angle(x2-x1, y2-y1)
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
-        self.width = 5
+        self.width = 6
 
         cross1.add_road(self)
         cross2.add_road(self)
@@ -56,6 +56,7 @@ class Road:
             print("ROAD = {}, ROAD LENGTH = {}, RECEIVED ABSCISSA = {}".format(self.id,self.length,x))
             raise ValueError("Incoming abscissa is too high")
 
+        veh.changed_road = True
         veh.change_leader(self.last_vehicle(origin_cross))
 
         # We add the vehicle at the beginning of the road, in the corresponding direction
@@ -74,6 +75,10 @@ class Road:
         # Choose the next road
         veh.next_road = veh.destination_cross.choose_direction(self)
 
+        if veh.leader == None and veh.next_road != None:
+            leader = veh.next_road.last_vehicle(veh.destination_cross)
+            if leader != None:
+                veh.change_leader(leader)
 
     def outgoing_veh(self, veh):
         """Outgoing vehicle of the road"""
@@ -255,6 +260,21 @@ class Cross:
 
         self.dispatch = dispatch
 
+    def get_intentions(self):
+        veh = None
+        # Search for the first vehicles on non-prioritary axis
+        if len(self.roads) == 3:
+            veh = self.roads[1].first_vehicle(self)
+
+        if veh != None:
+            if veh.leader == None or veh.leader.road == veh.next_road:
+                other = self.roads[0].first_vehicle(self)
+                if other != None and other.next_road == veh.next_road:
+                    if other.time_to_cross() < veh.time_to_cross():
+                        veh.change_leader(other)
+
+
+
     # def new_leader(self,vehicle):
     #     """When a car go out of a road, incoming on a new road,
     #     set this car as leader of the vehicles arriving at the cross and going on the same road"""
@@ -303,7 +323,7 @@ class GeneratorCross(Cross):
 
                 new_vehicle = Vehicle(road, self, vehicle_type = veh_type)
                 vehicles.append(new_vehicle)
-                new_vehicle.leader = vehicle_ahead
+                new_vehicle.change_leader(vehicle_ahead)
                 new_vehicle.v = road.speed_limit
                 self.transfer_vehicle(new_vehicle, road)
                 self.rand_period = None
@@ -315,7 +335,7 @@ class Vehicle:
     VEH_LENGTH = {"car": 4, "truck": 10}
     VEH_B_MAX = {"car": 10, "truck": 5}
 
-    def __init__(self, road, origin_cross, T = 2, s0 = 2, a = 2, vehicle_type = "car", b = 1.5):
+    def __init__(self, road, origin_cross, T = 1, s0 = 2, a = 2, vehicle_type = "car", b = 1.5):
         """road : Road on which the car is summoned
         origin_cross : Cross by where the car enter on the road
         T : Desired time headway [s]
@@ -343,7 +363,9 @@ class Vehicle:
         self.destination_cross = None
         self.next_road = None
         self.leader = None
+        self.followers = []
         self.x = 0 # Position of the vehicle on the road
+        self.dx = 0
         self.v = 0 # Speed of the vehicle
 
         self.T = T
@@ -351,6 +373,7 @@ class Vehicle:
         self.delta = 4
         self.b = b
 
+        self.changed_road = True
         self.rep = None # Index for graphic representation
 
         if vehicle_type == "car": # It's a car
@@ -374,13 +397,19 @@ class Vehicle:
         f(0) = 0, f(PI/2) = 15/50, f(PI) = 1"""
         if self.next_road != None:
             angle = abs(self.next_road.angle - self.road.angle) % 3.1415
-            # if angle < 0.01:
-            #     angle = 3.1415
+            if angle < 0.01:
+                angle = 3.1415
             self.v0 = (0.08 *angle*angle + 0.06 * angle) * self.road.speed_limit
 
     def destroy(self):
         deleted_vehicles.append(self)
+        for veh in self.followers:
+            veh.leader = None
+            veh.find_leader()
         vehicles.remove(self)
+
+    def time_to_cross(self):
+        return (self.road.length - self.x)/self.v0
 
     # def time_to_cross(self):
     #     if self.v > 0.01:
@@ -403,7 +432,26 @@ class Vehicle:
         if not (isinstance(vehicle, Vehicle) or vehicle == None):
             print(type(vehicle))
             raise NotVehicleError
+        self.leave_leader()
         self.leader = vehicle
+        if vehicle != None :
+            self.leader.followers.append(self)
+
+    def leave_leader(self):
+        """Tell the leader that we don't follow it anymore"""
+        if self.leader != None:
+            if self in self.leader.followers:
+                self.leader.followers.remove(self)
+            else:
+                raise ValueError("The vehicle is not a follower")
+
+    def find_leader(self):
+        if self.leader == None :
+            leader = self.road.last_vehicle(self.origin_cross)
+            if leader == None:
+                leader = self.next_road.last_vehicle(self.destination_cross)
+                if leader != None:
+                    self.change_leader(leader)
 
     def spacing_with_leader(self):
         """Return the spacing between the car and its leader
@@ -415,6 +463,8 @@ class Vehicle:
                 return self.leader.x - self.x - (self.leader.length + self.length)/2
             elif self.leader.road == self.next_road:
                 return self.road.length - self.x + self.leader.x - (self.leader.length + self.length)/2
+            elif self.leader.destination_cross == self.destination_cross:
+                return self.road.length - (self.leader.road.length - self.leader.x) - self.x - (self.leader.length + self.length)/2
             else:
                 return 250
 
