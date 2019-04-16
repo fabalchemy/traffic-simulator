@@ -6,7 +6,7 @@ from math import exp
 import decimal
 
 # Discretize time
-decimal.getcontext().prec = 6 # Set the precision for the decimal module
+decimal.getcontext().prec = 8 # Set the precision for the decimal module
 t = decimal.Decimal(0)
 dt_s = decimal.Decimal(1)/decimal.Decimal(100)
 dt_g = 40 # [ms] # Time interval for graphic update()
@@ -37,15 +37,15 @@ def next_steps(dt_d, steps):
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) :
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 40) :
                     veh.turn_speed()
 
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
-                leader_index = None if veh.leader == None else vehicles.index(veh.leader)
+                leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
 
-                print("ERROR DURING THE SIMULATION, while working on {}, going from road {} to {}, following {}"
-                .format(vehicles.index(veh), veh.road.id, next_road_id, leader_index))
+                print("ERROR DURING THE SIMULATION, while working on {}, going from road {} to {}, following {}, spacing: {}"
+                .format(vehicles.index(veh), veh.road.id, next_road_id, leader_index, veh.spacing_with_leader()))
                 raise
 
 
@@ -87,6 +87,10 @@ def update():
     else:
         mouseover()
         gui.map.after(dt_g, update)
+        if gui.controls.leadership.get():
+            gui.map.draw_leadership(vehicles)
+        else:
+            gui.map.delete("leadership")
 
 
 mouse_x, mouse_y = 0, 0
@@ -111,8 +115,8 @@ def mouseover():
             for veh in vehicles:
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
-                    leader_index = None if veh.leader == None else vehicles.index(veh.leader)
-                    txt = txt + "Vehicle {} (speed: {}, going to: {}, leader: {})".format(vehicles.index(veh), veh.v0, next_road_id, leader_index)
+                    leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
+                    txt = txt + "Vehicle {} (speed: {:4f}, d_to_cross: {:4f}, going to: {}, leader: {}) \n {}".format(vehicles.index(veh), veh.v, veh.d_to_cross(), next_road_id, leader_index, gui.map.coords(veh.rep))
                     break
     gui.map.itemconfigure(tag, text=txt)
     gui.map.coords(tag, x+15, y+15)

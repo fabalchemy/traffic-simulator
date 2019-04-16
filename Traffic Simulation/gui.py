@@ -1,5 +1,5 @@
 import tkinter as tk
-from functions import get_color_from_gradient
+from functions import get_color_from_gradient, random_color
 from math import cos, sin, atan, sqrt
 from constants import *
 
@@ -91,18 +91,21 @@ class Map(tk.Canvas):
                     self.coords(veh.rep, points)
             else:
                 self.move(veh.rep, veh.dx*cos(angle)*e, veh.dx*sin(angle)*e)
-                veh.dx = 0
                 self.itemconfig(veh.rep, fill=get_color_from_gradient(veh.v/veh.road.speed_limit))
-
-
+                veh.dx = 0
 
     def draw_leadership(self, vehicle_list):
         map.delete("leadership")
         for veh in vehicle_list:
             if veh.leader != None:
-                leader_coords = self.coords(veh.leader.rep)
-                follower_coords = self.coords(veh.rep)
-                map.create_line(leader_coords[0], leader_coords[1], follower_coords[0], follower_coords[1], fill="black", width=1, tag="leadership")
+                if veh.leader.rep != None:
+                    leader_coords = self.coords(veh.leader.rep)
+                    follower_coords = self.coords(veh.rep)
+                    x_l, y_l = (leader_coords[4] + leader_coords[6])/2, (leader_coords[5] + leader_coords[7])/2
+                    x_f, y_f = (follower_coords[0] + follower_coords[2])/2, (follower_coords[1] + follower_coords[3])/2
+                    e = self.current_scale
+                    d1, d2, d3 = 2*e, 2*e, 0.75*e
+                    map.create_line(x_l, y_l, x_f, y_f, fill=veh.leadership_color, width=1, tag="leadership", arrow = tk.FIRST, arrowshape=(d1, d2, d3))
 
 class Container(tk.Frame):
     def __init__(self, root):
@@ -145,6 +148,9 @@ class Controls(tk.Frame):
         self.pause_b = tk.Radiobutton(self.time_mgmt, text="Pause", variable=self.play, value=False)
         self.play_b.pack(side=tk.LEFT)
         self.pause_b.pack(side=tk.LEFT)
+        tk.Button(self.time_mgmt, text="<<", command = lambda : self.change_speed(-1)).pack(side=tk.LEFT)
+        tk.Button(self.time_mgmt, text="x1", command = lambda : self.speed.set(1)).pack(side=tk.LEFT)
+        tk.Button(self.time_mgmt, text=">>", command = lambda : self.change_speed(1)).pack(side=tk.LEFT)
 
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
@@ -169,11 +175,22 @@ class Controls(tk.Frame):
         self.leadership_true.pack(side=tk.LEFT)
         self.leadership_false.pack(side=tk.LEFT)
 
+    def change_speed(self, value):
+        speed = int(self.speed.get() + value)
+        if speed >= 0 & speed <= 10:
+            self.speed.set(speed)
 
 
 def keyboard_listener(event):
     if event.char == " ":
         controls.play.set(False) if controls.play.get() else controls.play.set(True)
+
+    elif event.char.lower() == "f":
+        controls.change_speed(1)
+    elif event.char.lower() == "d":
+        controls.speed.set(1)
+    elif event.char.lower() == "s":
+        controls.change_speed(-1)
 
     elif event.keysym == "Right":
         map.scan_mark(0,0)

@@ -1,7 +1,7 @@
 # coding = utf-8
 
 from constants import *
-from functions import angle
+from functions import angle, random_color
 from math import pow
 from random import randint, random
 
@@ -34,6 +34,10 @@ class Road:
         self.angle = angle(x2-x1, y2-y1)
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.width = 6
+
+        self.stop = Vehicle(self, cross1)
+        self.stop.v = 0
+        self.stop.x = self.length
 
         cross1.add_road(self)
         cross2.add_road(self)
@@ -68,6 +72,7 @@ class Road:
             veh.destination_cross = self.cross1
 
         veh.x = x
+        veh.dx = 0
         veh.road = self
         veh.origin_cross = origin_cross
         veh.v0 = self.speed_limit
@@ -88,7 +93,7 @@ class Road:
             if type(veh) is not Vehicle:
                 raise notVehicleError
 
-            if veh.x > self.length:
+            if veh.x >= self.length:
                 if veh in self.vehicle_list_12:
                     if type(destination_cross) is GeneratorCross:
                         del self.vehicle_list_12[0]
@@ -261,17 +266,43 @@ class Cross:
         self.dispatch = dispatch
 
     def get_intentions(self):
-        veh = None
+        incoming_veh = []
         # Search for the first vehicles on non-prioritary axis
-        if len(self.roads) == 3:
+        if len(self.roads) >= 3:
             veh = self.roads[1].first_vehicle(self)
+            if veh != None:
+                incoming_veh.append(veh)
+        if len(self.roads) == 4:
+            veh = self.roads[3].first_vehicle(self)
+            if veh != None:
+                incoming_veh.append(veh)
 
-        if veh != None:
-            if veh.leader == None or veh.leader.road == veh.next_road:
-                other = self.roads[0].first_vehicle(self)
+        for veh in incoming_veh:
+            if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) : # if close enough to the cross
+                other = self.roads[0].first_vehicle(self) # find problematic vehicles
                 if other != None and other.next_road == veh.next_road:
-                    if other.time_to_cross() < veh.time_to_cross():
-                        veh.change_leader(other)
+                    if other.d_to_cross() < veh.d_to_cross() + PRIORITY_GAP: # next vehicle is arriving before us to the cross
+                        # check space with next vehicle
+                        for follower in other.followers:
+                            if follower.road == other.road: # it's a true follower (there should only be one)
+                                space = other.x - follower.x
+
+                                # TODO: enhance this req_space
+                                req_space = follower.s0 + veh.s0 + veh.v * veh.T + follower.v * follower.T + veh.length # Required space :
+
+                                if space < req_space + PRIORITY_GAP:
+                                    veh.change_leader(veh.road.stop)
+                                    other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
+                                else:
+                                    if other not in veh.followers:
+                                        veh.change_leader(other)
+                                        follower.change_leader(veh)
+                    else:
+                        leader = veh.next_road.last_vehicle(veh.destination_cross)
+                        if leader != None:
+                            veh.change_leader(leader)
+                        if not veh in other.followers:
+                            other.change_leader(veh)
 
 
 
@@ -364,6 +395,7 @@ class Vehicle:
         self.next_road = None
         self.leader = None
         self.followers = []
+        self.leadership_color = random_color()
         self.x = 0 # Position of the vehicle on the road
         self.dx = 0
         self.v = 0 # Speed of the vehicle
@@ -411,21 +443,18 @@ class Vehicle:
     def time_to_cross(self):
         return (self.road.length - self.x)/self.v0
 
-    # def time_to_cross(self):
-    #     if self.v > 0.01:
-    #         d_to_cross = self.road.length - self.x
-    #         T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
-    #         d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
-    #         T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
-    #         return T_to_cross
-    #     else:
-    #         return 2 # arbitrary constant
-    #
-    # def d_to_cross(self):
-    #     if type(self) is FakeLeader:
-    #         return self.real_veh.d_to_cross()
-    #     else:
-    #         return self.road.length - self.x
+    def time_to_cross(self):
+        if self.v > 0.01:
+            d_to_cross = self.d_to_cross()
+            T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
+            d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
+            T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
+            return T_to_cross
+        else:
+            return 2 # arbitrary constant
+
+    def d_to_cross(self):
+        return self.road.length - self.x
 
     def change_leader(self, vehicle):
         """To change the leader of a vehicle, from outside the class"""
@@ -434,7 +463,10 @@ class Vehicle:
             raise NotVehicleError
         self.leave_leader()
         self.leader = vehicle
-        if vehicle != None :
+        if self.leader != None :
+            # if self.leader.road == self.road:
+            #     for follower in self.leader.followers:
+            #         follower.change_leader(self)
             self.leader.followers.append(self)
 
     def leave_leader(self):
@@ -446,12 +478,10 @@ class Vehicle:
                 raise ValueError("The vehicle is not a follower")
 
     def find_leader(self):
-        if self.leader == None :
-            leader = self.road.last_vehicle(self.origin_cross)
-            if leader == None:
-                leader = self.next_road.last_vehicle(self.destination_cross)
-                if leader != None:
-                    self.change_leader(leader)
+        if self.leader == None and self.next_road != None:
+            leader = self.next_road.last_vehicle(self.destination_cross)
+            if leader != None:
+                self.change_leader(leader)
 
     def spacing_with_leader(self):
         """Return the spacing between the car and its leader
@@ -460,11 +490,17 @@ class Vehicle:
             return 250 # arbitrary constant
         else:
             if self.leader.road == self.road:
-                return self.leader.x - self.x - (self.leader.length + self.length)/2
+                if self.leader.rep != None:
+                    # "standard" leader
+                    return self.leader.x - self.x - (self.leader.length + self.length)/2
+                else :
+                    # "stop" leader
+                    return max(0.01, self.leader.x - self.x - (self.leader.length + self.length)/2)
             elif self.leader.road == self.next_road:
-                return self.road.length - self.x + self.leader.x - (self.leader.length + self.length)/2
+                return max(0.01, self.d_to_cross() + self.leader.x - (self.leader.length + self.length)/2)
             elif self.leader.destination_cross == self.destination_cross:
-                return self.road.length - (self.leader.road.length - self.leader.x) - self.x - (self.leader.length + self.length)/2
+                # "fake" leader: self follows a projection
+                return max(0.01,self.d_to_cross() - self.leader.d_to_cross() - (self.leader.length + self.length)/2)
             else:
                 return 250
 

@@ -13,4 +13,7 @@ GRADIENT_1 = [[0, "#9e1313"], [0.3, "#e60000"], [0.6, "#f07d02"], [1, "#84ca50"]
 # BACKGROUND_COLOR = "#f7f7f7"
 BACKGROUND_COLOR = "#e5e5e5"
 ROAD_COLOR = "#ffffff"
-ROAD_OUTLINE_COLOR = "#e5e5e5"
+ROAD_OUTLINE_COLOR = "#ffffff"
+
+# CONSTANTS
+PRIORITY_GAP = 10
