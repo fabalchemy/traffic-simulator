@@ -12,7 +12,7 @@ def angle(x,y):
 
 
 def random_color():
-    r = lambda: random.randint(0,255)
+    r = lambda: random.randint(50,255)
     return "#{:02x}{:02x}{:02x}".format(r(), r(), r())
 
 def hex_to_RGB(hex):

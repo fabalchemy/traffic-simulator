@@ -40,6 +40,10 @@ def next_steps(dt_d, steps):
                 if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 40) :
                     veh.turn_speed()
 
+                if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
+                    and veh.destination_cross != veh.leader.destination_cross)):
+                    veh.find_leader()
+
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
                 leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
@@ -59,6 +63,7 @@ def next_steps(dt_d, steps):
 
         for veh in deleted_vehicles:
             gui.map.delete(veh.rep)
+            gui.map.delete(veh.brake_rep)
         deleted_vehicles.clear()
 
         t+= dt_d
@@ -116,7 +121,7 @@ def mouseover():
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
                     leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
-                    txt = txt + "Vehicle {} (speed: {:4f}, d_to_cross: {:4f}, going to: {}, leader: {}) \n {}".format(vehicles.index(veh), veh.v, veh.d_to_cross(), next_road_id, leader_index, gui.map.coords(veh.rep))
+                    txt = txt + "Vehicle {} (speed: {:4f}, d_to_cross: {:4f}, going to: {}, leader: {})".format(vehicles.index(veh), veh.v, veh.d_to_cross(), next_road_id, leader_index)
                     break
     gui.map.itemconfigure(tag, text=txt)
     gui.map.coords(tag, x+15, y+15)

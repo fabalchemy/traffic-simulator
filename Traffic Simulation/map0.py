@@ -25,7 +25,7 @@ disp = {3:default_dispatch_3, 4:default_dispatch_4}
 
 ecart = e = 200
 # coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
-coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150)]
+coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
 
 crosses.append(Cross((150,150)))
 
@@ -38,7 +38,7 @@ for coords in coords_gen:
 roads.append(Road(crosses[0], crosses[1], 54/3.6, 0))
 roads.append(Road(crosses[0], crosses[2], 54/3.6, 1))
 roads.append(Road(crosses[0], crosses[3], 54/3.6, 2))
-# road_list.append(Road(C[0], C[4], 54/3.6))
+roads.append(Road(crosses[0], crosses[4], 54/3.6, 3))
 
 gui.map.draw_road(roads)
 gui.map.draw_cross(crosses)

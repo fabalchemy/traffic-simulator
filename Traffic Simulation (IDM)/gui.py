@@ -50,7 +50,7 @@ class Map(tk.Canvas):
     def draw_cross(self, cross_list):
         for cross in cross_list:
             (x,y) = cross.coords
-            self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey20", outline = "grey30", tag="cross")
+            cross.rep = self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill="grey20", outline = "grey30", tag="cross")
 
     def draw_road(self, road_list):
         for road in road_list:
@@ -61,7 +61,7 @@ class Map(tk.Canvas):
             dy = - cos(ang)*w/2
             dxb = -l*cos(ang)
             dyb = -l*sin(ang)
-            self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill="grey20", tag="road")
+            road.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill="grey20", tag="road")
 
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
@@ -82,7 +82,7 @@ class Map(tk.Canvas):
 
             points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
             if veh.rep == None :
-                veh.rep = self.create_polygon(points, fill="red", tag="car")
+                veh.rep = self.create_polygon(points, fill="red", tag="vehicle")
             else:
                 self.coords(veh.rep, points)
 

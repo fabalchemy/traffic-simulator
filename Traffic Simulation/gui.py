@@ -67,32 +67,62 @@ class Map(tk.Canvas):
 
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
-            angle = veh.road.angle if (veh.origin_cross==veh.road.cross1) else (veh.road.angle + 3.1415)
+            orient = 1 if veh.origin_cross == veh.road.cross1 else -1
+            cos_angle, sin_angle = orient*veh.road.cos_angle, orient*veh.road.sin_angle
             e = self.current_scale
-            if veh.changed_road:
-                veh.changed_road = False
-                (x0,y0) = veh.origin_cross.coords
-                road_width = veh.road.width
-                (l, w) = (veh.length, veh.width)
-                x = x0 - road_width/4 *sin(angle) + (veh.x+veh.length/2)*cos(angle)
-                y = y0 + road_width/4 *cos(angle) + (veh.x+veh.length/2)*sin(angle)
+            road_width = veh.road.width
+            (x0,y0) = veh.origin_cross.coords
+            (l, w) = (veh.length, veh.width)
 
-                x = x*e
-                y = y*e
-                dx = sin(angle)*w/2 *e
-                dy = - cos(angle)*w/2 *e
-                dxb = - l*cos(angle) *e
-                dyb = - l*sin(angle) *e
+            x = x0 - road_width/4 *sin_angle + (veh.x+veh.length/2)*cos_angle
+            y = y0 + road_width/4 *cos_angle + (veh.x+veh.length/2)*sin_angle
+            x = x*e
+            y = y*e
 
-                points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
-                if veh.rep == None :
-                    veh.rep = self.create_polygon(points, fill=get_color_from_gradient(veh.v/veh.road.speed_limit), tag="vehicle")
+            dx = sin_angle*w/2 *e
+            dy = - cos_angle*w/2 *e
+            dxb = - l*cos_angle *e
+            dyb = - l*sin_angle *e
+
+            dxb_brake = - (l-0.4)*cos_angle *e
+            dyb_brake = - (l-0.4)*sin_angle *e
+
+            points_car = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
+            points_brake = (x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, x+dxb_brake+dx, y+dyb_brake+dy, x+dxb_brake-dx, y+dyb_brake-dy)
+
+            points_blinker = (0,0,0,0)
+            if veh.road.length - veh.x < 30:
+                rad = 0.4 * e
+                if veh.direction == "left":
+                    points_blinker = (x-dx-rad, y-dy-rad, x-dx+rad, y-dy+rad)
+                elif veh.direction == "right":
+                    points_blinker = (x+dx-rad, y+dy-rad, x+dx+rad, y+dy+rad)
                 else:
-                    self.coords(veh.rep, points)
+                    points_blinker = (0,0,0,0)
+
+            color = get_color_from_gradient(veh.v/veh.road.speed_limit)
+
+            if veh.rep == None and veh.brake_rep == None and veh.blinker_rep == None:
+                veh.rep = self.create_polygon(points_car, fill=color, tag="vehicle")
+                veh.brake_rep = self.create_polygon(points_brake, fill=color, tag="brake")
+                veh.blinker_rep = self.create_oval(points_blinker, fill="orange", outline="orange")
             else:
-                self.move(veh.rep, veh.dx*cos(angle)*e, veh.dx*sin(angle)*e)
-                self.itemconfig(veh.rep, fill=get_color_from_gradient(veh.v/veh.road.speed_limit))
-                veh.dx = 0
+                self.coords(veh.rep, points_car)
+                self.coords(veh.brake_rep, points_brake)
+                self.coords(veh.blinker_rep, points_blinker)
+                self.itemconfig(veh.rep, fill=color)
+                if veh.last_a <= -.5:
+                    self.itemconfig(veh.brake_rep, fill="red")
+                else:
+                    self.itemconfig(veh.brake_rep, fill=color)
+
+                if veh.blinker_state == 0:
+                    self.itemconfig(veh.blinker_rep, state="normal")
+                elif veh.blinker_state == 7:
+                    self.itemconfig(veh.blinker_rep, state="hidden")
+                elif veh.blinker_state >= 14 :
+                    veh.blinker_state = -1
+                veh.blinker_state += 1
 
     def draw_leadership(self, vehicle_list):
         map.delete("leadership")
