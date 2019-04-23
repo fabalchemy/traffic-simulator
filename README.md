@@ -1,7 +1,7 @@
 # projet-trafic-cpbx
 
-Simulation et régulation du trafic routier
-Simulation and regulation of road traffic
+Simulation et régulation du trafic routier /
+Road traffic simulation and regulation
 
 
 Projet du semestre 4 au Cycle Préparatoire de Bordeaux
