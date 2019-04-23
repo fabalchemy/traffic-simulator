@@ -94,9 +94,9 @@ class Map(tk.Canvas):
             if veh.road.length - veh.x < 30:
                 rad = 0.4 * e
                 if veh.direction == "left":
-                    points_blinker = (x-dx-rad, y-dy-rad, x-dx+rad, y-dy+rad)
-                elif veh.direction == "right":
                     points_blinker = (x+dx-rad, y+dy-rad, x+dx+rad, y+dy+rad)
+                elif veh.direction == "right":
+                    points_blinker = (x-dx-rad, y-dy-rad, x-dx+rad, y-dy+rad)
                 else:
                     points_blinker = (0,0,0,0)
 

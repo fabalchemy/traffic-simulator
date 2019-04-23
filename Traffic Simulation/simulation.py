@@ -39,7 +39,7 @@ class Road:
 
         self.stop = Vehicle(self, cross1)
         self.stop.v = 0
-        self.stop.x = self.length
+        self.stop.x = self.length - 1
 
         cross1.add_road(self)
         cross2.add_road(self)
@@ -63,6 +63,7 @@ class Road:
             raise ValueError("Incoming abscissa is too high")
 
         veh.changed_road = True
+        veh.decision = False
         veh.change_leader(self.last_vehicle(origin_cross))
 
         # We add the vehicle at the beginning of the road, in the corresponding direction
@@ -86,9 +87,9 @@ class Road:
             i = veh.destination_cross.roads.index(veh.road)
             j = veh.destination_cross.roads.index(veh.next_road)
             if j == i-1:
-                veh.direction = "left"
-            elif j == i+1:
                 veh.direction = "right"
+            elif j == i+1:
+                veh.direction = "left"
             else:
                 veh.direction = None
         else:
@@ -107,7 +108,15 @@ class Road:
             if type(veh) is not Vehicle:
                 raise notVehicleError
 
-            if veh.x >= self.length:
+            # TODO: Change road length when turning right
+            if veh.direction == "right":
+                length = self.length - veh.length/2
+                add = veh.length/2
+            else:
+                length = self.length
+                add = 0
+
+            if veh.x >= length:
                 if veh in self.vehicle_list_12:
                     if type(destination_cross) is GeneratorCross:
                         del self.vehicle_list_12[0]
@@ -116,7 +125,7 @@ class Road:
                         if len(self.vehicle_list_12) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
                     else:
-                        destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), veh.next_road, veh.x - self.length)
+                        destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), veh.next_road, veh.x - self.length +add)
                         # if len(self.vehicle_list_12)>0:
                         #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
@@ -128,7 +137,7 @@ class Road:
                         if len(self.vehicle_list_21) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
                     else:
-                        destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), veh.next_road, veh.x - self.length)
+                        destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), veh.next_road, veh.x - self.length +add)
                         # if len(self.vehicle_list_21)>0:
                         #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
@@ -278,6 +287,103 @@ class Cross:
 
         self.dispatch = dispatch
 
+    # def get_intentions(self):
+    #     incoming_veh = []
+    #     # Search for the first vehicles on non-prioritary axis
+    #     if len(self.roads) >= 3:
+    #         veh = self.roads[1].first_vehicle(self)
+    #         if veh != None:
+    #             incoming_veh.append(veh)
+    #     # if len(self.roads) == 4:
+    #     #     veh = self.roads[3].first_vehicle(self)
+    #     #     if veh != None:
+    #     #         incoming_veh.append(veh)
+    #
+    #     for veh in incoming_veh:
+    #         i = veh.destination_cross.roads.index(veh.road)
+    #         if veh.d_to_cross() <= ((veh.v*veh.v)/(2*veh.b_max) + 30) : # if close enough to the cross
+    #             others = []
+    #             others.append(self.roads[(i-1)%4].first_vehicle(self)) # find problematic vehicles
+    #             others.append(self.roads[(i+1)%4].first_vehicle(self))
+    #
+    #             for other in others:
+    #                 if other != None and other.next_road == veh.next_road:
+    #                     if other.d_to_cross() < veh.d_to_cross() + PRIORITY_GAP: # next vehicle is arriving before us to the cross
+    #                         # check space with next vehicle
+    #                         for follower in other.followers:
+    #                             if follower.road == other.road: # it's a true follower (there should only be one)
+    #                                 space = other.x - follower.x
+    #                                 req_space = follower.s0 + veh.s0 + veh.v * veh.T + follower.v * follower.T + veh.length + (follower.road.speed_limit - veh.v)**2/(2*veh.a) # Required space :
+    #
+    #                                 if space < req_space + PRIORITY_GAP:
+    #                                     veh.change_leader(veh.road.stop)
+    #                                     other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
+    #                                 elif other not in veh.followers:
+    #                                     print("ahah")
+    #                                     veh.change_leader(other)
+    #                                     follower.change_leader(veh)
+    #                     else:
+    #                         leader = veh.next_road.last_vehicle(veh.destination_cross)
+    #                         if leader != None:
+    #                             veh.change_leader(leader)
+    #                         if not veh in other.followers:
+    #                             other.change_leader(veh)
+
+    # def get_intentions(self):
+    #     incoming_veh = []
+    #     # Search for the first vehicles on non-prioritary axis
+    #     if len(self.roads) >= 3:
+    #         veh = self.roads[1].first_vehicle(self)
+    #         if veh != None:
+    #             incoming_veh.append(veh)
+    #     # if len(self.roads) == 4:
+    #     #     veh = self.roads[3].first_vehicle(self)
+    #     #     if veh != None:
+    #     #         incoming_veh.append(veh)
+    #
+    #     for veh in incoming_veh:
+    #         if not veh.decision:
+    #             i = veh.destination_cross.roads.index(veh.road)
+    #             if veh.d_to_cross() <= ((veh.v*veh.v)/(2*veh.b_max) + 30) : # if close enough to the cross
+    #                 others = []
+    #                 others.append(self.roads[(i-1)%4].first_vehicle(self)) # find problematic vehicles
+    #                 others.append(self.roads[(i+1)%4].first_vehicle(self))
+    #
+    #                 for other in others:
+    #                     if other != None:
+    #                         if other.next_road == veh.next_road:
+    #                             if other.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP: # next vehicle is arriving before us to the cross
+    #                                 # check space with next vehicle
+    #                                 for follower in other.followers:
+    #                                     if follower.road == other.road: # it's a true follower (there should only be one)
+    #                                         space = (other.x - follower.x)/other.v
+    #                                         req_space = (follower.road.speed_limit - veh.v)/veh.a
+    #
+    #                                         if space < req_space + PRIORITY_GAP:
+    #                                             veh.change_leader(veh.road.stop)
+    #                                             other.change_leader(other.next_road.last_vehicle(other.destination_cross))
+    #                                         elif other not in veh.followers:
+    #                                             print("insertion entre 2 véhicules")
+    #                                             veh.change_leader(other)
+    #                                             follower.change_leader(veh)
+    #                                             veh.decision = True
+    #                             else:
+    #                                 leader = veh.next_road.last_vehicle(veh.destination_cross)
+    #                                 veh.decision = True
+    #                                 if leader != None:
+    #                                     veh.change_leader(leader)
+    #                                 if not veh in other.followers:
+    #                                     other.change_leader(veh)
+    #                         else:
+    #                             if other.next_road != veh.road:
+    #                                 if other.d_to_cross() / other.v < veh.time_to_cross():
+    #                                     print("stop, priorité à la route", other.d_to_cross() / other.v, veh.time_to_cross())
+    #                                     veh.decision = False
+    #                                     veh.change_leader(veh.road.stop)
+    #                                     for follower in veh.followers:
+    #                                         if follower.road != veh.road:
+    #                                             follower.change_leader(follower.next_road.last_vehicle(follower.destination_cross))
+
     def get_intentions(self):
         incoming_veh = []
         # Search for the first vehicles on non-prioritary axis
@@ -285,42 +391,46 @@ class Cross:
             veh = self.roads[1].first_vehicle(self)
             if veh != None:
                 incoming_veh.append(veh)
-        if len(self.roads) == 4:
-            veh = self.roads[3].first_vehicle(self)
-            if veh != None:
-                incoming_veh.append(veh)
 
         for veh in incoming_veh:
-            i = veh.destination_cross.roads.index(veh.road)
-            if veh.d_to_cross() <= ((veh.v*veh.v)/(2*veh.b_max) + 30) : # if close enough to the cross
-                others = []
-                # TODO : change because indexes depend on the road of the vehicle
-                others.append(self.roads[(i-1)%4].first_vehicle(self)) # find problematic vehicles
-                others.append(self.roads[(i+1)%4].first_vehicle(self))
-                
-                for other in others:
-                    if other != None:
-                        if other.next_road == veh.next_road:
-                            if other.d_to_cross() < veh.d_to_cross() + PRIORITY_GAP: # next vehicle is arriving before us to the cross
-                                # check space with next vehicle
-                                for follower in other.followers:
-                                    if follower.road == other.road: # it's a true follower (there should only be one)
-                                        space = other.x - follower.x
-                                        req_space = follower.s0 + veh.s0 + veh.v * veh.T + follower.v * follower.T + veh.length + (follower.road.speed_limit - veh.v)**2/(2*veh.a) # Required space :
+            if not veh.decision:
+                if veh.d_to_cross() <= ((veh.v*veh.v)/(2*veh.b_max) + 30):
+                    i = veh.destination_cross.roads.index(veh.road)
+                    j = veh.destination_cross.roads.index(veh.next_road)
 
-                                        if space < req_space + PRIORITY_GAP:
-                                            veh.change_leader(veh.road.stop)
-                                            other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
-                                        else:
-                                            if other not in veh.followers:
-                                                veh.change_leader(other)
-                                                follower.change_leader(veh)
-                            else:
-                                leader = veh.next_road.last_vehicle(veh.destination_cross)
-                                if leader != None:
-                                    veh.change_leader(leader)
-                                if not veh in other.followers:
-                                    other.change_leader(veh)
+                    other = self.roads[(i-(j-i))%4].first_vehicle(self)
+
+                    if other != None:
+                        if other.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP:
+                            for follower in other.followers:
+                                if follower.road == other.road: # it's a true follower (there should only be one)
+                                    space = other.time_to_cross() - follower.time_to_cross()
+                                    req_space = (follower.road.speed_limit - veh.v)/veh.a
+
+                                    if space < req_space :
+                                        veh.change_leader(veh.road.stop)
+                                        other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
+                                    elif other not in veh.followers:
+                                        veh.change_leader(other)
+                                        follower.change_leader(veh)
+                                        veh.decision = True
+                        else:
+                            leader = veh.next_road.last_vehicle(veh.destination_cross)
+                            veh.decision = True
+                            if leader != None:
+                                veh.change_leader(leader)
+                            if not veh in other.followers:
+                                other.change_leader(veh)
+
+                    anti = self.roads[(i+(j-i))%4].first_vehicle(self)
+
+                    if anti != None and veh.direction == "left":
+                        if anti.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP:
+                            veh.change_leader(veh.road.stop)
+                            other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
+                            veh.decision = False
+
+
 
 
 class GeneratorCross(Cross):
@@ -412,6 +522,8 @@ class Vehicle:
         self.delta = 4
         self.b = b
 
+        self.decision = False
+
         self.changed_road = True
         self.rep = None # Index for graphic representation
         self.brake_rep = None
@@ -453,18 +565,21 @@ class Vehicle:
             veh.find_leader()
         vehicles.remove(self)
 
-    # def time_to_cross(self):
-    #     return (self.road.length - self.x)/self.v0
-
     def time_to_cross(self):
-        if self.v > 0.01:
-            d_to_cross = self.d_to_cross()
-            T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
-            d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
-            T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
-            return T_to_cross
+        if self.v != 0:
+            return self.d_to_cross() / self.v
         else:
-            return 2 # arbitrary constant
+            return 1
+
+    # def time_to_cross(self):
+    #     if self.v > 0.01:
+    #         d_to_cross = self.d_to_cross()
+    #         T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
+    #         d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
+    #         T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
+    #         return T_to_cross
+    #     else:
+    #         return 1 # arbitrary constant
 
     def d_to_cross(self):
         return self.road.length - self.x
@@ -507,7 +622,7 @@ class Vehicle:
                     # "stop" leader
                     return max(0.01, self.leader.x - self.x - (self.leader.length + self.length)/2)
             elif self.leader.road == self.next_road:
-                return max(0.01, self.d_to_cross() + self.leader.x - (self.leader.length + self.length)/2)
+                return self.d_to_cross() + self.leader.x - (self.leader.length + self.length)/2
             elif self.leader.destination_cross == self.destination_cross:
                 # "fake" leader: self follows a projection
                 return max(0.01,self.d_to_cross() - self.leader.d_to_cross() - (self.leader.length + self.length)/2)
