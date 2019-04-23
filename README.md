@@ -1,6 +1,8 @@
 # projet-trafic-cpbx
 
-Régulation du trafic par la gestion automatisée des feux tricolores
+Simulation et régulation du trafic routier
+Simulation and regulation of road traffic
+
 
 Projet du semestre 4 au Cycle Préparatoire de Bordeaux
   par Fabien SAVY & Killian TROLES
