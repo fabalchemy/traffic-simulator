@@ -30,7 +30,7 @@ coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
 crosses.append(Cross((150,150)))
 
 for coords in coords_gen:
-    gen = GeneratorCross(coords = coords, period = 5)
+    gen = GeneratorCross(coords = coords, period = 8)
     generators.append(gen)
     crosses.append(gen)
 

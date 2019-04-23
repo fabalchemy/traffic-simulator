@@ -95,10 +95,14 @@ class Road:
         else:
             veh.direction = None
 
+        for follower in veh.followers:
+            follower.decision = False
+
         if veh.leader == None and veh.next_road != None:
             leader = veh.next_road.last_vehicle(veh.destination_cross)
             if leader != None:
                 veh.change_leader(leader)
+
 
     def outgoing_veh(self, veh):
         """Outgoing vehicle of the road"""
@@ -108,7 +112,7 @@ class Road:
             if type(veh) is not Vehicle:
                 raise notVehicleError
 
-            # TODO: Change road length when turning right
+            # Change road length when turning right
             if veh.direction == "right":
                 length = self.length - veh.length/2
                 add = veh.length/2
@@ -391,6 +395,10 @@ class Cross:
             veh = self.roads[1].first_vehicle(self)
             if veh != None:
                 incoming_veh.append(veh)
+        if len(self.roads) == 4:
+            veh = self.roads[3].first_vehicle(self)
+            if veh != None:
+                incoming_veh.append(veh)
 
         for veh in incoming_veh:
             if not veh.decision:
@@ -401,7 +409,7 @@ class Cross:
                     other = self.roads[(i-(j-i))%4].first_vehicle(self)
 
                     if other != None:
-                        if other.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP:
+                        if other.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP[veh.veh_type]:
                             for follower in other.followers:
                                 if follower.road == other.road: # it's a true follower (there should only be one)
                                     space = other.time_to_cross() - follower.time_to_cross()
@@ -417,18 +425,40 @@ class Cross:
                         else:
                             leader = veh.next_road.last_vehicle(veh.destination_cross)
                             veh.decision = True
-                            if leader != None:
-                                veh.change_leader(leader)
+                            # if leader != None:
+                            veh.change_leader(leader)
                             if not veh in other.followers:
                                 other.change_leader(veh)
 
                     anti = self.roads[(i+(j-i))%4].first_vehicle(self)
 
                     if anti != None and veh.direction == "left":
-                        if anti.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP:
+                        if anti.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP[veh.veh_type]:
                             veh.change_leader(veh.road.stop)
                             other.change_leader(veh.next_road.last_vehicle(veh.destination_cross))
                             veh.decision = False
+
+        if len(self.roads) > 2:
+            prio1 = self.roads[0].first_vehicle(self)
+            prio2 = self.roads[2].first_vehicle(self)
+
+            if prio1 != None and prio2 != None:
+                if not prio1.decision:
+                    if prio1.direction == "left":
+                        if prio2.time_to_cross() < prio1.time_to_cross() + PRIORITY_GAP[veh.veh_type]:
+                            prio1.change_leader(prio1.road.stop)
+                        else:
+                            prio1.change_leader(prio1.next_road.last_vehicle(self))
+                            prio1.decision = True
+                if not prio2.decision:
+                    if prio2.direction == "left":
+                        if prio1.time_to_cross() < prio2.time_to_cross() + PRIORITY_GAP[veh.veh_type]:
+                            prio2.change_leader(prio2.road.stop)
+                        else:
+                            prio2.decision = True
+                            prio2.change_leader(prio2.next_road.last_vehicle(self))
+
+
 
 
 
@@ -531,6 +561,8 @@ class Vehicle:
         self.blinker_rep = None
         self.direction = None
         self.blinker_state = 0
+
+        self.veh_type = vehicle_type
 
         if vehicle_type == "car": # It's a car
             self.a = a # Acceleration

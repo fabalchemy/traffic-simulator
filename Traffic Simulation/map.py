@@ -9,10 +9,10 @@ def copy_list(a):
         for j in range(len(a[i])):
             b[i].append(a[i][j])
     return b
-
-# default_dispatch_3=[[0 , 0 , 1],
+#
+# default_dispatch_3=[[0 , 1 , 0],
 #                     [0.5 , 0,  0.5],
-#                     [0.5 , 0.5 , 0]]
+#                     [0.3 , 0.7 , 0]]
 default_dispatch_3=[[0   , 0.2 , 0.8],
                     [0.5 , 0   , 0.5],
                     [0.8 , 0.2 , 0  ]]
@@ -30,7 +30,7 @@ coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150)]
 crosses.append(Cross((150,150)))
 
 for coords in coords_gen:
-    gen = GeneratorCross(coords = coords, period = 5)
+    gen = GeneratorCross(coords = coords, period = 8)
     generators.append(gen)
     crosses.append(gen)
 
