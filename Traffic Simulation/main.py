@@ -121,7 +121,7 @@ def mouseover():
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
                     leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
-                    txt = txt + "Vehicle {} (speed: {:.3f}, d_to_cross: {:.3f}, going to: {}, leader: {})".format(vehicles.index(veh), veh.v, veh.d_to_cross(), next_road_id, leader_index)
+                    txt = txt + "Vehicle {} (speed: {:.2f}, d_to_cross: {:.2f}, going to: {}, leader: {}, decision: {})".format(vehicles.index(veh), veh.v*3.6, veh.d_to_cross(), next_road_id, leader_index, veh.decision)
                     break
     gui.map.itemconfigure(tag, text=txt)
     gui.map.coords(tag, x+15, y+15)

@@ -16,4 +16,4 @@ ROAD_COLOR = "#ffffff"
 ROAD_OUTLINE_COLOR = "#ffffff"
 
 # CONSTANTS
-PRIORITY_GAP = {"car" : 2, "truck": 8}
+PRIORITY_GAP = {"car" : 2, "truck": 5}
