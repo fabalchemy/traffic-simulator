@@ -90,15 +90,15 @@ class Map(tk.Canvas):
             points_car = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
             points_brake = (x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, x+dxb_brake+dx, y+dyb_brake+dy, x+dxb_brake-dx, y+dyb_brake-dy)
 
-            points_blinker = (0,0,0,0)
-            if veh.road.length - veh.x < 30:
+            points_blinker = (-100,-100,-100,-100)
+            if veh.road.length - veh.x < 50:
                 rad = 0.4 * e
                 if veh.direction == "left":
                     points_blinker = (x+dx-rad, y+dy-rad, x+dx+rad, y+dy+rad)
                 elif veh.direction == "right":
                     points_blinker = (x-dx-rad, y-dy-rad, x-dx+rad, y-dy+rad)
                 else:
-                    points_blinker = (0,0,0,0)
+                    points_blinker = (-100,-100,-100,-100)
 
             color = get_color_from_gradient(veh.v/veh.road.speed_limit)
 

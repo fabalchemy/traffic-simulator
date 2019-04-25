@@ -110,7 +110,7 @@ class Road:
             # Change road length when turning right
             if veh.direction == "right":
                 length = self.length - veh.length/2
-                add = veh.length/2
+                add = veh.length
             else:
                 length = self.length
                 add = 0
@@ -421,16 +421,18 @@ class Cross:
                             if len(other.followers) == 0:
                                 if other not in veh.followers:
                                     veh.change_leader(veh.road.stop)
-                        else:
+
+                        elif other.next_road == veh.next_road:
                             leader = veh.next_road.last_vehicle(veh.destination_cross)
-                            veh.decision = True
                             veh.change_leader(leader)
-                            if other.next_road == veh.next_road:
-                                other.change_leader(veh)
-                            else:
-                                for follower in other.followers:
-                                    if follower.d_to_cross() < 15:
-                                        follower.change_leader(veh)
+                            veh.decision = True
+                            other.change_leader(veh)
+
+                        else:
+                            if other not in veh.followers:
+                                veh.change_leader(veh.road.stop)
+
+
 
                         anti = self.roads[(i+(j-i))%4].first_vehicle(self)
 
@@ -505,7 +507,7 @@ class GeneratorCross(Cross):
             self.next_period = self.period + self.rand_period
 
         if (t - self.last_t) >= self.next_period :
-            veh_type = "car" if random() < 0.93 else "truck"
+            veh_type = "car" if random() < 0.9 else "truck"
             if (vehicle_ahead == None or vehicle_ahead.x > (self.roads[0].speed_limit**2)/(2*Vehicle.VEH_B_MAX[veh_type]) + vehicle_ahead.s0 + (vehicle_ahead.length + Vehicle.VEH_LENGTH[veh_type])/2):
                 self.last_t = t
 
