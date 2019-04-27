@@ -10,7 +10,7 @@ def copy_list(a):
             b[i].append(a[i][j])
     return b
 #
-# default_dispatch_3=[[0 , .5 , .5],
+# default_dispatch_3=[[0 , 1 , 0],
 #                     [0 , 0,  1],
 #                     [0, 1 , 0]]
 default_dispatch_3=[[0   , 0.2 , 0.8],

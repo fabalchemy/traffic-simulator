@@ -52,7 +52,7 @@ class Map(tk.Canvas):
     def draw_cross(self, cross_list):
         for cross in cross_list:
             (x,y) = cross.coords
-            cross.rep = self.create_oval(x-2.5, y-2.5, x+2.5, y+2.5, fill=ROAD_COLOR, outline=ROAD_COLOR, tag="cross")
+            cross.rep = self.create_oval(x-3, y-3, x+3, y+3, fill=ROAD_COLOR, outline=ROAD_COLOR, tag="cross")
 
     def draw_road(self, road_list):
         for road in road_list:
@@ -169,8 +169,8 @@ class Controls(tk.Frame):
         self.time_str = tk.StringVar()
         self.time_str.set("Current time: 0 s.")
         tk.Label(master = self.time_mgmt, textvariable = self.time_str).pack()
-        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=10, resolution=0.1, orient=tk.HORIZONTAL, length=200)
-        self.speed.set(1)
+        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=30, resolution=0.1, orient=tk.HORIZONTAL, length=200)
+        self.speed.set(int(1))
         self.speed.pack(fill="both", expand="yes")
         self.play = tk.BooleanVar()
         self.play.set(True)

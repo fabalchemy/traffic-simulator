@@ -82,7 +82,7 @@ class Map(tk.Canvas):
         self.tag_lower("bg", "all")
 
     def draw_cross(self, x, y, build_type):
-        radius = 10 * self.current_scale
+        radius = 5 * self.current_scale
         if build_type == "cross":
             a = self.create_oval(x-radius, y-radius, x+radius, y+radius, fill="grey26", outline = "grey26", tag="cross")
         elif build_type == "generator":
@@ -352,7 +352,7 @@ def extract_data():
     file.write("\n")
     for c in cross_list:
         if len(c.roads) > 2:
-            file.write("{} {} {}".format(cross_list.index(c), Road.list.index(c.priority_axis[0]), Road.list.index(c.priority_axis[1])))
+            file.write("{} {} {}\n".format(cross_list.index(c), Road.list.index(c.priority_axis[0]), Road.list.index(c.priority_axis[1])))
     file.close()
 
 root.state('zoomed') # Maximize the window
