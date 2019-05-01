@@ -595,16 +595,6 @@ class Vehicle:
         else:
             return 1.5
 
-    # def time_to_cross(self):
-    #     if self.v > 0.01:
-    #         d_to_cross = self.d_to_cross()
-    #         T_slow_down = (self.v - self.v0) / self.b  #Time to reach the turn speed (new v0)
-    #         d_slow_down = ((self.v - self.v0) / 2) * T_slow_down # Distance travelled slowing down
-    #         T_to_cross = ((d_to_cross - d_slow_down) / self.v0) + T_slow_down
-    #         return T_to_cross
-    #     else:
-    #         return 1 # arbitrary constant
-
     def d_to_cross(self):
         return self.road.length - self.x
 

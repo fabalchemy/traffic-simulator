@@ -163,8 +163,12 @@ class Container(tk.Frame):
 class Controls(tk.Frame):
     def __init__(self, root):
         tk.Frame.__init__(self, root)
+        self.logo = tk.PhotoImage(file="logo_traffic_simulator.gif", format="gif")
+        tk.Label(self, image=self.logo).grid(row=0, column=0)
+
+
         self.time_mgmt = tk.LabelFrame(self, text="Time managment", padx=10, pady= 10)
-        self.time_mgmt.grid(row=0,column=0, sticky="new")
+        self.time_mgmt.grid(row=1,column=0, sticky="new")
 
         self.time_str = tk.StringVar()
         self.time_str.set("Current time: 0 s.")
@@ -184,7 +188,7 @@ class Controls(tk.Frame):
 
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
-        self.information.grid(row=1,column=0, sticky="new")
+        self.information.grid(row=2,column=0, sticky="new")
         tk.Label(master = self.information, text = "Number of vehicles: ").grid(row = 0, column = 0)
         self.nb_veh = tk.IntVar()
         self.nb_veh.set(0)
@@ -195,13 +199,13 @@ class Controls(tk.Frame):
         tk.Label(master = self.information, textvariable = self.avg_speed).grid(row = 1, column = 1)
 
         self.settings = tk.LabelFrame(self, text="Settings", padx=10, pady=10)
-        self.settings.grid(row=2,column=0, sticky="new")
+        self.settings.grid(row=3,column=0, sticky="new")
 
-        tk.Label(master = self.settings, text = "Show leadership relations:").pack()
+        tk.Label(master = self.settings, text = "Show leadership relations:").pack(side = tk.LEFT)
         self.leadership = tk.BooleanVar()
         self.leadership.set(True)
-        self.leadership_true = tk.Radiobutton(self.settings, text="Play", variable=self.leadership, value=True)
-        self.leadership_false = tk.Radiobutton(self.settings, text="Pause", variable=self.leadership, value=False)
+        self.leadership_true = tk.Radiobutton(self.settings, text="On", variable=self.leadership, value=True)
+        self.leadership_false = tk.Radiobutton(self.settings, text="Off", variable=self.leadership, value=False)
         self.leadership_true.pack(side=tk.LEFT)
         self.leadership_false.pack(side=tk.LEFT)
 
@@ -239,6 +243,7 @@ def keyboard_listener(event):
         map.scan_dragto(0,-dy)
 
 root = tk.Tk()
+root.title("Traffic Simulator")
 root.state('zoomed')
 container = Container(root)
 container.grid(row=0, column=0, sticky="nsew")
