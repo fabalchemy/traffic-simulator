@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map import *
+from map_from_data import *
 from time import *
 from math import exp
 import decimal
@@ -37,7 +37,14 @@ def next_steps(dt_d, steps):
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) :
+                if veh.slow_down > 1:
+                    veh.slow_down -= 1
+                elif veh.slow_down == 1:
+                    veh.slow_down = 0
+                    veh.v0 = veh.road.speed_limit
+
+
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.slow_down == 0 :
                     veh.turn_speed()
 
                 # if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
@@ -107,8 +114,8 @@ def click(event):
         if "vehicle" in tags:
             for veh in vehicles:
                 if veh.rep == obj:
-                    print("Found")
                     veh.v0 = veh.v/3
+                    veh.slow_down = 10*int(1/dt_s)
                     break
 
 def mouseover():

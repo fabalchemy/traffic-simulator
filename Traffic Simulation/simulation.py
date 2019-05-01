@@ -80,7 +80,8 @@ class Road:
         veh.last_road = veh.road
         veh.road = self
         veh.origin_cross = origin_cross
-        veh.v0 = self.speed_limit
+        if veh.slow_down == 0:
+            veh.v0 = self.speed_limit
 
         # Choose the next road
         veh.next_road = veh.destination_cross.choose_direction(self)
@@ -540,6 +541,7 @@ class Vehicle:
         self.b = b
 
         self.decision = False
+        self.slow_down = 0
         self.angle = 0
 
         self.changed_road = True
