@@ -573,11 +573,11 @@ class Vehicle:
         if self.next_road != None:
             angle_road = self.road.angle if self.destination_cross == self.road.cross2 else (3.14-self.road.angle)
             angle_next_road = self.next_road.angle if self.destination_cross == self.next_road.cross1 else (3.14-self.next_road.angle)
-            angle = 3.1415 - (angle_next_road + angle_road)
+            angle = abs(angle_next_road + angle_road)%3.1415
             if angle < 0.01:
                 angle = 3.1415
-            # if angle > 3.1415:
-            #     angle = 3.1415-angle
+            # elif angle > 3.1415:
+            #     angle = -3.1415
             self.angle = angle
             self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
 
