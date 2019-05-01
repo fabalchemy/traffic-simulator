@@ -85,20 +85,21 @@ class Road:
         veh.next_road = veh.destination_cross.choose_direction(self)
 
         if veh.next_road != None:
-            i = veh.destination_cross.roads.index(veh.road)
-            j = veh.destination_cross.roads.index(veh.next_road)
-            if j == (i-1)%4:
-                veh.direction = "right"
-            elif j == (i+1)%4:
-                veh.direction = "left"
-            elif j == (i+2)%4:
+            nb_roads = len(veh.destination_cross.roads)
+            if nb_roads == 2 or veh.road in veh.destination_cross.priority_axis and veh.next_road in veh.destination_cross.priority_axis:
                 veh.direction = None
+            else:
+                i = veh.destination_cross.roads.index(veh.road)
+                j = veh.destination_cross.roads.index(veh.next_road)
+                if j == (i-1)%nb_roads:
+                    veh.direction = "right"
+                elif j == (i+1)%nb_roads:
+                    veh.direction = "left"
         else:
             veh.direction = None
 
         for follower in veh.followers:
             follower.decision = False
-
 
     def outgoing_veh(self, veh):
         """Outgoing vehicle of the road"""
@@ -326,10 +327,10 @@ class Cross:
                 prio2.decision = False
                 prio2.change_leader(prio2.leader.road.last_vehicle(prio2.destination_cross))
 
-            if prio1 == None and prio2 != None:
-                prio2.find_leader()
-            if prio2 == None and prio1 != None:
-                prio1.find_leader()
+            # if prio1 == None and prio2 != None:
+            #     prio2.find_leader()
+            # if prio2 == None and prio1 != None:
+            #     prio1.find_leader()
 
             if prio1 != None and prio2 != None:
                 if not prio1.decision:
@@ -352,6 +353,14 @@ class Cross:
                             prio2.change_leader(prio2.next_road.last_vehicle(self))
                             if prio1.next_road == prio2.next_road:
                                 prio1.change_leader(prio2)
+
+                if prio2.v == 0:
+                    if random() < 0.5:
+                        prio1.find_leader()
+                        prio1.decision = True
+                    else:
+                        prio2.find_leader()
+                        prio2.decision = True
 
         # Non-priority vehicles then
         incoming_veh = []
@@ -421,7 +430,7 @@ class Cross:
 
                     if veh.direction == "left" or veh.direction == None:
                         for ant in anti:
-                            if (ant.time_to_cross() < veh.time_to_cross()):
+                            if (ant.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP[veh.veh_type]):
                                 veh.decision = False
                                 veh.change_leader(veh.road.stop)
                                 if other != None and other.leader != other.road.stop:
@@ -688,4 +697,4 @@ class Vehicle:
         return self.last_a
 
     def acceleration_IDM(self):
-        return self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2)
+        return max(-self.b_max,self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2))

@@ -169,7 +169,7 @@ class Controls(tk.Frame):
         self.time_str = tk.StringVar()
         self.time_str.set("Current time: 0 s.")
         tk.Label(master = self.time_mgmt, textvariable = self.time_str).pack()
-        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=30, resolution=0.1, orient=tk.HORIZONTAL, length=200)
+        self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=10, resolution=0.1, orient=tk.HORIZONTAL, length=200)
         self.speed.set(int(1))
         self.speed.pack(fill="both", expand="yes")
         self.play = tk.BooleanVar()

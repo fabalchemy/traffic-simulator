@@ -31,18 +31,18 @@ def next_steps(dt_d, steps):
         # Update acceleration, speed and position of each vehicle
         for veh in vehicles:
             try:
-                a = veh.acceleration_IIDM()
+                a = veh.acceleration_IDM()
                 veh.dx += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.x += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
-                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 40) :
+                if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) :
                     veh.turn_speed()
 
-                if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
-                    and veh.destination_cross != veh.leader.destination_cross)):
-                    veh.find_leader()
+                # if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
+                #     and veh.destination_cross != veh.leader.destination_cross)):
+                #     veh.find_leader()
 
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
@@ -76,7 +76,6 @@ def update():
     global average_speed
     T = perf_counter()
     if gui.controls.play.get():
-        # next_steps(decimal.Decimal(dt_g/1000*gui.controls.speed.get()), 1) # less precise but faster
         next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicles)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
@@ -99,6 +98,18 @@ def update():
 
 
 mouse_x, mouse_y = 0, 0
+
+def click(event):
+    x, y = gui.map.canvasx(event.x), gui.map.canvasy(event.y)
+    objects = gui.map.find_overlapping(x,y,x,y)
+    for obj in objects:
+        tags = gui.map.gettags(obj)
+        if "vehicle" in tags:
+            for veh in vehicles:
+                if veh.rep == obj:
+                    print("Found")
+                    veh.v0 = veh.v/3
+                    break
 
 def mouseover():
     x, y = gui.map.canvasx(mouse_x), gui.map.canvasy(mouse_y)
@@ -131,6 +142,7 @@ def moved(event):
     mouse_x, mouse_y = event.x, event.y
 
 gui.map.bind("<Motion>", moved)
+gui.map.bind("<ButtonPress-3>", click)
 tag = gui.map.create_text(10, 10, text="", anchor="nw")
 
 gui.map.after(dt_g, update)
