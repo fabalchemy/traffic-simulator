@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from math import cos, sin, atan, sqrt, acos
 
-map_filename = "map.png"
+map_filename = "map0.png"
 image = Image.open(map_filename)
 
 W, H = image.size

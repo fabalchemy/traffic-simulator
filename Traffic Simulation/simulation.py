@@ -356,7 +356,7 @@ class Cross:
                             if prio1.next_road == prio2.next_road:
                                 prio1.change_leader(prio2)
 
-                if prio2.v == 0:
+                if prio1.v == 0 or prio2.v == 0:
                     if random() < 0.5:
                         prio1.find_leader()
                         prio1.decision = True
@@ -393,7 +393,7 @@ class Cross:
                             veh.decision = True
                             leader = veh.next_road.last_vehicle(veh.destination_cross)
                             veh.change_leader(leader)
-                            if other.next_road == veh.next_road:
+                            if other.next_road == veh.next_road and other not in veh.followers:
                                 other.change_leader(veh)
 
                         else:

@@ -43,7 +43,6 @@ def next_steps(dt_d, steps):
                     veh.slow_down = 0
                     veh.v0 = veh.road.speed_limit
 
-
                 if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.slow_down == 0 :
                     veh.turn_speed()
 
