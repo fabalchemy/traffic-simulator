@@ -31,7 +31,7 @@ def next_steps(dt_d, steps):
         # Update acceleration, speed and position of each vehicle
         for veh in vehicles:
             try:
-                a = veh.acceleration_IDM()
+                a = veh.acceleration_IIDM()
                 veh.dx += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.x += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)

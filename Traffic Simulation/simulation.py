@@ -4,6 +4,7 @@ from constants import *
 from functions import angle, random_color
 from math import pow, cos, sin
 from random import randint, random
+from math import log, e, pi
 
 # Lists of simulated objects
 generators = []
@@ -571,15 +572,28 @@ class Vehicle:
         """Give the optimal speed for changing road
         f(0) = 0, f(PI/2) = 15/50, f(PI) = 1"""
         if self.next_road != None:
-            angle_road = self.road.angle if self.destination_cross == self.road.cross2 else (3.14-self.road.angle)
-            angle_next_road = self.next_road.angle if self.destination_cross == self.next_road.cross1 else (3.14-self.next_road.angle)
-            angle = abs(angle_next_road + angle_road)%3.1415
+            if self.destination_cross == self.road.cross1:
+                angle_road = self.road.angle
+            elif self.road.angle >= 0:
+                angle_road = self.road.angle - pi
+            else:
+                angle_road = pi + self.road.angle
+
+            if self.destination_cross == self.next_road.cross1:
+                angle_next_road = self.next_road.angle
+            elif self.next_road.angle >= 0:
+                angle_next_road = self.next_road.angle - pi
+            else:
+                angle_next_road = pi + self.next_road.angle
+
+            angle = abs(angle_road - angle_next_road)
             if angle < 0.01:
                 angle = 3.1415
-            # elif angle > 3.1415:
-            #     angle = -3.1415
+            elif angle > pi:
+                 angle = 2*pi - angle
             self.angle = angle
-            self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
+            self.v0 = log(1+(e-1)*angle/pi) * self.road.speed_limit
+            # self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
 
     def destroy(self):
         """Delete a vehicle from the map and give a new leader to the followers"""
