@@ -345,7 +345,7 @@ def extract_data():
     file.write("\n")
     for c in Cross.list:
         cross_list.append(c)
-        file.write("{} {} \n".format(c.x*scale, c.y*scale))
+        file.write("{} {} {} \n".format(c.x*scale, c.y*scale, True))
     file.write("\n")
     for r in Road.list:
         file.write("{} {} \n".format(cross_list.index(r.cross1), cross_list.index(r.cross2)))

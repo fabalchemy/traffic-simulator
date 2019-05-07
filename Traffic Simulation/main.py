@@ -58,7 +58,7 @@ def next_steps(dt_d, steps):
                 if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.slow_down == 0 :
                     veh.turn_speed()
 
-                if veh.leader != None and veh.leader != veh.road.stop and veh.leader.road == veh.road and veh.destination_cross != veh.leader.destination_cross:
+                if veh.leader != None and veh.leader.veh_type != "stop" and veh.leader.road == veh.road and veh.destination_cross != veh.leader.destination_cross:
                     veh.decision = False
                     veh.find_leader()
 
@@ -69,7 +69,7 @@ def next_steps(dt_d, steps):
 
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
-                leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
+                leader_index = None if veh.leader == None or veh.leader.veh_type == "stop" else vehicles.index(veh.leader)
 
                 print("ERROR DURING THE SIMULATION, while working on {}, going from road {} to {}, following {} on {}, spacing: {}"
                 .format(vehicles.index(veh), veh.road.id, next_road_id, leader_index, veh.leader.road.id, veh.spacing_with_leader()))
@@ -102,6 +102,7 @@ def update():
     if gui.controls.play.get():
         next_steps(dt_s, int((dt_g/(1000*float(dt_s)))*gui.controls.speed.get()))
         gui.map.draw_vehicle(vehicles)
+        gui.map.draw_traffic_lights(crosses)
         gui.controls.time_str.set("Current time : " + str(t) + " s.")
         gui.controls.nb_veh.set(len(vehicles))
         gui.controls.avg_speed.set("{:.4f}".format(average_speed))
@@ -155,8 +156,8 @@ def mouseover():
             for veh in vehicles:
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
-                    leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
-                    leader_index = "stop" if veh.leader != None and veh.leader.rep == None else leader_index
+                    leader_index = None if veh.leader == None or veh.leader.veh_type == "stop" else vehicles.index(veh.leader)
+                    leader_index = "stop" if veh.leader != None and veh.leader.veh_type == "stop" else leader_index
                     txt = txt + "Vehicle {} \n(speed: {:.2f}, v0: {:.2f}, d_to_cross: {:.2f}, going to: {}, leader: {}, decision: {}, angle: {:.2f})".format(vehicles.index(veh), veh.v*3.6, veh.v0*3.6, veh.d_to_cross(), next_road_id, leader_index, veh.decision, veh.angle)
                     break
     gui.map.itemconfigure(tag, text=txt)

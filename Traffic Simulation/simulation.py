@@ -38,9 +38,12 @@ class Road:
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.width = 6
 
-        self.stop = Vehicle(self, cross1)
-        self.stop.v = 0
-        self.stop.x = self.length - 1
+        self.stop1 = Vehicle(self, cross1, vehicle_type="stop")
+        self.stop1.v = 0
+        self.stop1.x = self.length - 1
+        self.stop2 = Vehicle(self, cross2, vehicle_type="stop")
+        self.stop2.v = 0
+        self.stop2.x = self.length - 1
 
         cross1.add_road(self)
         cross2.add_road(self)
@@ -182,7 +185,7 @@ class Road:
 class Cross:
     """Class modelizing a cross"""
 
-    def __init__(self, coords, id=None):
+    def __init__(self, coords, id=None, traffic_lights=True):
         """Generate a Cross at coords (x,y)"""
 
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float)
@@ -195,6 +198,7 @@ class Cross:
         self.rep = None
 
         self.priority = 1
+        self.traffic_lights_enabled = traffic_lights
         self.traffic_lights = [ [0, 15, 18, 33],
                                 [1,  0,  0,  0],
                                 [0,  0,  1,  0]]
@@ -314,7 +318,7 @@ class Cross:
                 if nb_followers > 1:
                     for fol in last1.followers:
                         if fol.road != last1.road:
-                            fol.change_leader(fol.road.stop)
+                            fol.stop()
                             fol.decision = False
                             break
             if last2 != None:
@@ -325,7 +329,7 @@ class Cross:
                 if nb_followers > 1:
                     for fol in last2.followers:
                         if fol.road != last2.road:
-                            fol.change_leader(fol.road.stop)
+                            fol.stop()
                             fol.decision = False
                             break
 
@@ -354,7 +358,7 @@ class Cross:
                 if veh1.direction == veh2.direction == "left":
                         veh1.find_leader()
                         veh1.decision = True
-                        veh2.change_leader(veh2.road.stop)
+                        veh2.stop()
                         veh2.decision = False
 
                 else:
@@ -362,7 +366,7 @@ class Cross:
                         if veh1.direction == "left":
                             if veh2.time_to_cross() < veh1.time_to_cross() + PRIORITY_GAP[veh1.veh_type]:
                                 # not enough time to cross the road before the other vehicle
-                                veh1.change_leader(veh1.road.stop)
+                                veh1.stop()
                                 veh2.find_leader()
                             else:
                                 veh1.decision = True
@@ -373,7 +377,7 @@ class Cross:
                     if not veh2.decision:
                         if veh2.direction == "left":
                             if veh1.time_to_cross() < veh2.time_to_cross() + PRIORITY_GAP[veh2.veh_type]:
-                                veh2.change_leader(veh2.road.stop)
+                                veh2.stop()
                                 veh1.find_leader()
                             else:
                                 veh2.decision = True
@@ -393,7 +397,7 @@ class Cross:
 
         # Non-priority vehicles
         # Search for the first vehicles on non-prioritary axis
-        if len(self.roads) == 3:
+        if len(self.roads) == 3 and not self.traffic_lights_enabled:
             incoming_veh = []
             veh = self.roads[1].first_vehicle(self)
             if veh != None:
@@ -429,7 +433,7 @@ class Cross:
                             else:
                                 # the gap is too small, try to insert between other and its follower
                                 if len(other.followers) == 0 and other not in veh.followers:
-                                    veh.change_leader(veh.road.stop)
+                                    veh.stop()
                                 else:
                                     for follower in other.followers:
                                         if follower.road == other.road: # it's a true follower (there should only be one)
@@ -438,7 +442,7 @@ class Cross:
 
                                             if space < req_space :
                                                 # the gap is too small again, stop!
-                                                veh.change_leader(veh.road.stop)
+                                                veh.stop()
                                             elif other not in veh.followers:
                                                 # okay, let's go
                                                 veh.decision = True
@@ -460,8 +464,8 @@ class Cross:
                             for ant in anti:
                                 if (ant.time_to_cross() < veh.time_to_cross() + PRIORITY_GAP[veh.veh_type] + PRIORITY_GAP[ant.veh_type]):
                                     veh.decision = False
-                                    veh.change_leader(veh.road.stop)
-                                    if other != None and other.leader != other.road.stop:
+                                    veh.stop()
+                                    if other != None and other.leader != None and other.leader.veh_type != "stop":
                                         other.change_leader(other.next_road.last_vehicle(veh.destination_cross))
                                     break
 
@@ -470,7 +474,7 @@ class Cross:
 
 
     def updateTrafficLights(self, t):
-        if len(self.roads) == 4:
+        if len(self.roads) > 2 and self.traffic_lights_enabled:
             for i in range(len(self.traffic_lights[0])):
                 if t%(self.traffic_lights[0][-1]+3) == self.traffic_lights[0][i]:
                     # print("Update traffic lights", self.traffic_lights[1][i], self.traffic_lights[2][i])
@@ -485,9 +489,9 @@ class Cross:
                         if len(vehicle_list) > 0:
                             veh = vehicle_list[0]
                             if self.traffic_lights[(road_index)%2+1][i] == 1: # GO
-                                if self.roads[road_index].stop in vehicle_list:
+                                if self.roads[road_index].stop1 in vehicle_list or self.roads[road_index].stop1 in vehicle_list :
                                     for veh in vehicle_list:
-                                        if veh == self.roads[road_index].stop:
+                                        if veh.veh_type == "stop":
                                             vehicle_list.remove(veh)
                                             for follower in veh.followers:
                                                 follower.find_leader()
@@ -496,20 +500,23 @@ class Cross:
                                     veh.find_leader()
                                     veh.decision = False
 
-                            elif veh != self.roads[road_index].stop: # STOP
+                            elif veh.veh_type != "stop": # STOP
                                 for veh in vehicle_list:
                                     if veh.time_to_cross() > PRIORITY_GAP[veh.veh_type] or veh.v < 2:
-                                        vehicle_list.insert(vehicle_list.index(veh), self.roads[road_index].stop)
-                                        veh.change_leader(veh.road.stop)
+                                        veh.stop()
+                                        vehicle_list.insert(vehicle_list.index(veh), veh.leader)
                                         break
+                                if len(vehicle_list) == 0:
+                                    if self == self.road.cross1:
+                                        vehicle_list.append(self.road.stop1)
+                                    else:
+                                        vehicle_list.append(self.road.stop2)
 
 
 
 
 class GeneratorCross(Cross):
     """Generator cross, at the edges of the map, to add or delete vehicles on/off the map"""
-
-    RAND_GAP = 5 # Bigger this constant is, more random is the generation of vehicles
 
     def __init__(self, coords, period):
         """coords : (x,y) coordinates
@@ -534,7 +541,7 @@ class GeneratorCross(Cross):
         vehicle_ahead = road.last_vehicle(self)
 
         if self.rand_period  == None:
-            self.rand_period = randint(-GeneratorCross.RAND_GAP, GeneratorCross.RAND_GAP)
+            self.rand_period = randint(RAND_GAP, RAND_GAP)
             self.next_period = self.period + self.rand_period
 
         if (t - self.last_t) >= self.next_period :
@@ -620,6 +627,11 @@ class Vehicle:
             self.b_max = Vehicle.VEH_B_MAX[vehicle_type]
             self.length = Vehicle.VEH_LENGTH["truck"]
             self.width = 2.5
+        elif vehicle_type == "stop":
+            self.a=0
+            self.b_max = Vehicle.VEH_B_MAX["car"] # Maximum vehicle deceleration (in case of danger ahead)
+            self.length = Vehicle.VEH_LENGTH["car"]
+            self.width = 2
         else:
             raise TypeError("Non existing type of vehicle, car or truck?")
 
@@ -661,11 +673,20 @@ class Vehicle:
             veh.find_leader()
         vehicles.remove(self)
 
+    def stop(self):
+        if self.destination_cross == self.road.cross1:
+            self.change_leader(self.road.stop1)
+        else:
+            self.change_leader(self.road.stop2)
+
     def time_to_cross(self):
         if self.v > 0.1 :
             return self.d_to_cross() / self.v
         else:
-            return 1.5
+            if self.direction == "right":
+                return TIME_TO_CROSS["right"][self.veh_type]
+            else:
+                return TIME_TO_CROSS["other"][self.veh_type]
 
     def d_to_cross(self):
         return self.road.length - self.x
@@ -700,7 +721,7 @@ class Vehicle:
             return 250 # arbitrary constant
         else:
             if self.leader.road == self.road:
-                if self.leader.rep != None:
+                if self.leader.veh_type != "stop":
                     # "standard" leader
                     if self.x < self.length:
                         return max(0.01, self.leader.x - self.x - (self.leader.length + self.length)/2)

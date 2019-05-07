@@ -43,9 +43,10 @@ for line in lines:
             state = "cross"
     elif state == "cross":
         if line != "\n":
-            x,y = line.split()
+            x,y,t = line.split()
             x,y = float(x), float(y)
-            cross = Cross(coords = (x,y))
+            t = False if t == "False" else True
+            cross = Cross(coords = (x,y), traffic_lights=t)
             crosses.append(cross)
         else:
             state = "road"
@@ -72,3 +73,4 @@ for line in lines:
 
 gui.map.draw_cross(crosses)
 gui.map.draw_road(roads)
+gui.map.draw_stop(roads)

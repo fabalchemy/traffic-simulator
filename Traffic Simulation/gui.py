@@ -65,6 +65,44 @@ class Map(tk.Canvas):
             dyb = -l*sin(ang)
             road.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill=ROAD_COLOR, outline=ROAD_OUTLINE_COLOR, width = 2, tag="road")
 
+    def draw_stop(self, road_list):
+        for road in road_list:
+            orient = -1 #if veh.origin_cross == veh.road.cross1 else -1
+            cos_angle, sin_angle = orient*road.cos_angle, orient*road.sin_angle
+            e = self.current_scale
+            (x0,y0) = road.cross1.coords
+            w = road.width
+            l = road.length
+
+            dx = sin_angle*w/4 *e
+            dy = - cos_angle*w/4 *e
+            dxb = - 1*cos_angle *e
+            dyb = - 1*sin_angle *e
+
+            x = (x0 - w/4 *sin_angle + (-3)*cos_angle)*e
+            y = (y0 + w/4 *cos_angle + (-3)*sin_angle)*e
+            points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
+            road.stop1.rep = self.create_polygon(points, fill=ROAD_COLOR)
+
+            orient = 1 #if veh.origin_cross == veh.road.cross1 else -1
+            cos_angle, sin_angle = orient*road.cos_angle, orient*road.sin_angle
+            e = self.current_scale
+            (x0,y0) = road.cross2.coords
+            w = road.width
+            l = road.length
+
+            dx = sin_angle*w/4 *e
+            dy = - cos_angle*w/4 *e
+            dxb = - 1*cos_angle *e
+            dyb = - 1*sin_angle *e
+
+            x = (x0 - w/4 *sin_angle + (-3)*cos_angle)*e
+            y = (y0 + w/4 *cos_angle + (-3)*sin_angle)*e
+            points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
+            road.stop2.rep = self.create_polygon(points, fill=ROAD_COLOR)
+
+
+
     def draw_vehicle(self, vehicle_list):
         for veh in vehicle_list:
             orient = 1 if veh.origin_cross == veh.road.cross1 else -1
@@ -136,6 +174,22 @@ class Map(tk.Canvas):
                     e = self.current_scale
                     d1, d2, d3 = 2*e, 2*e, 0.75*e
                     map.create_line(x_l, y_l, x_f, y_f, fill=veh.leadership_color, width=1, tag="leadership", arrow = tk.FIRST, arrowshape=(d1, d2, d3))
+
+    def draw_traffic_lights(self, crosses):
+        for cross in crosses:
+            if len(cross.roads) > 2 and cross.traffic_lights_enabled:
+                for i in range(len(cross.roads)):
+                    if (i)%2 + cross.priority == 1:
+                        color = "green"
+                    else:
+                        color = "red"
+
+                    if cross == cross.roads[i].cross1:
+                        self.itemconfig(cross.roads[i].stop1.rep, fill=color)
+                    else:
+                        self.itemconfig(cross.roads[i].stop2.rep, fill=color)
+
+
 
 class Container(tk.Frame):
     def __init__(self, root):
