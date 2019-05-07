@@ -9,12 +9,12 @@ def copy_list(a):
             b[i].append(a[i][j])
     return b
 
-default_dispatch_3=[[0   , 0 , 1],
-                    [0 , 0   , 1],
-                    [1 , 0 , 0  ]]
-# default_dispatch_3=[[0   , 0.2 , 0.8],
-#                     [0.5 , 0   , 0.5],
-#                     [0.8 , 0.2 , 0  ]]
+# default_dispatch_3=[[0   , 0 , 1],
+#                     [0 , 0   , 1],
+#                     [1 , 0 , 0  ]]
+default_dispatch_3=[[0   , 0.2 , 0.8],
+                    [0.5 , 0   , 0.5],
+                    [0.8 , 0.2 , 0  ]]
 # default_dispatch_3=[[0   , 0.8 , 0.2],
 #                     [1 , 0   , 0],
 #                     [0.2 , 0.8 , 0  ]]

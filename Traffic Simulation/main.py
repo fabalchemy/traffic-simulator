@@ -9,23 +9,33 @@ import decimal
 decimal.getcontext().prec = 8 # Set the precision for the decimal module
 t = decimal.Decimal(0)
 dt_s = decimal.Decimal(1)/decimal.Decimal(100)
-dt_g = 40 # [ms] # Time interval for graphic update()
+dt_g = 100 # [ms] # Time interval for graphic update()
 
 delay = 0
 average_speed = 0
+
+# file = open("results.txt", "w")
 
 def next_steps(dt_d, steps):
     T = perf_counter()
     global t
     global average_speed
     dt = float(dt_d)
+
+    # if t == 0 or t == 2 or t == 4 :
+    #     veh = Vehicle(roads[0], crosses[0])
+    #     vehicles.append(veh)
+    #     roads[0].incoming_veh(veh, crosses[0])
+
     for i in range(steps):
+        # file.write("{}\t".format(t))
         average_speed = 0
         # Generate vehicles
         for gen in generators:
             gen.generate(t)
 
         for cross in crosses:
+            cross.updateTrafficLights(t)
             cross.get_intentions()
 
         # Update acceleration, speed and position of each vehicle
@@ -37,6 +47,8 @@ def next_steps(dt_d, steps):
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
 
+                # file.write("{} {} {} ".format(a, veh.v, veh.x))
+
                 if veh.slow_down > 1:
                     veh.slow_down -= 1
                 elif veh.slow_down == 1:
@@ -46,18 +58,24 @@ def next_steps(dt_d, steps):
                 if (veh.road.length - veh.x) <= ((veh.v*veh.v)/(2*veh.b_max) + 30) and veh.slow_down == 0 :
                     veh.turn_speed()
 
+                if veh.leader != None and veh.leader != veh.road.stop and veh.leader.road == veh.road and veh.destination_cross != veh.leader.destination_cross:
+                    veh.decision = False
+                    veh.find_leader()
+
                 # if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
                 #     and veh.destination_cross != veh.leader.destination_cross)):
+                #     # veh.decision = False
                 #     veh.find_leader()
 
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
                 leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
 
-                print("ERROR DURING THE SIMULATION, while working on {}, going from road {} to {}, following {}, spacing: {}"
-                .format(vehicles.index(veh), veh.road.id, next_road_id, leader_index, veh.spacing_with_leader()))
+                print("ERROR DURING THE SIMULATION, while working on {}, going from road {} to {}, following {} on {}, spacing: {}"
+                .format(vehicles.index(veh), veh.road.id, next_road_id, leader_index, veh.leader.road.id, veh.spacing_with_leader()))
                 raise
 
+        # file.write("\n")
 
         if len(vehicles) > 0:
             average_speed = (average_speed / len(vehicles)) * 3.6
@@ -138,6 +156,7 @@ def mouseover():
                 if veh.rep == obj:
                     next_road_id = None if veh.next_road == None else veh.next_road.id
                     leader_index = None if veh.leader == None or veh.leader.rep == None else vehicles.index(veh.leader)
+                    leader_index = "stop" if veh.leader != None and veh.leader.rep == None else leader_index
                     txt = txt + "Vehicle {} \n(speed: {:.2f}, v0: {:.2f}, d_to_cross: {:.2f}, going to: {}, leader: {}, decision: {}, angle: {:.2f})".format(vehicles.index(veh), veh.v*3.6, veh.v0*3.6, veh.d_to_cross(), next_road_id, leader_index, veh.decision, veh.angle)
                     break
     gui.map.itemconfigure(tag, text=txt)
