@@ -42,6 +42,7 @@ roads.append(Road(crosses[0], crosses[3], 54/3.6, 2))
 
 gui.map.draw_road(roads)
 gui.map.draw_cross(crosses)
+gui.map.draw_stop(roads)
 
 crosses[0].define_priority_axis((roads[0], roads[1]))
 crosses[0].sort_roads()

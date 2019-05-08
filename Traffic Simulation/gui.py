@@ -236,9 +236,9 @@ class Controls(tk.Frame):
         self.pause_b = tk.Radiobutton(self.time_mgmt, text="Pause", variable=self.play, value=False)
         self.play_b.pack(side=tk.LEFT)
         self.pause_b.pack(side=tk.LEFT)
-        tk.Button(self.time_mgmt, text="<<", command = lambda : self.change_speed(-1)).pack(side=tk.LEFT)
-        tk.Button(self.time_mgmt, text="x1", command = lambda : self.speed.set(1)).pack(side=tk.LEFT)
-        tk.Button(self.time_mgmt, text=">>", command = lambda : self.change_speed(1)).pack(side=tk.LEFT)
+        tk.Button(self.time_mgmt, text=">>", command = lambda : self.change_speed(1)).pack(side=tk.RIGHT)
+        tk.Button(self.time_mgmt, text="x1", command = lambda : self.speed.set(1)).pack(side=tk.RIGHT)
+        tk.Button(self.time_mgmt, text="<<", command = lambda : self.change_speed(-1)).pack(side=tk.RIGHT)
 
 
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
@@ -255,7 +255,7 @@ class Controls(tk.Frame):
         self.settings = tk.LabelFrame(self, text="Settings", padx=10, pady=10)
         self.settings.grid(row=3,column=0, sticky="new")
 
-        tk.Label(master = self.settings, text = "Show leadership relations:").pack(side = tk.LEFT)
+        tk.Label(master = self.settings, text = "Show leader links:").pack(side = tk.LEFT)
         self.leadership = tk.BooleanVar()
         self.leadership.set(True)
         self.leadership_true = tk.Radiobutton(self.settings, text="On", variable=self.leadership, value=True)

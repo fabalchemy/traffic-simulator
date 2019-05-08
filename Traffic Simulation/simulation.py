@@ -662,8 +662,8 @@ class Vehicle:
             elif angle > pi:
                  angle = 2*pi - angle
             self.angle = angle
-            self.v0 = log(1+(e-1)*angle/pi) * self.road.speed_limit
-            # self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
+            # self.v0 = log(1+(e-1)*angle/pi) * self.road.speed_limit
+            self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
 
     def destroy(self):
         """Delete a vehicle from the map and give a new leader to the followers"""
