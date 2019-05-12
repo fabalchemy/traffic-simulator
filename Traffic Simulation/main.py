@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map0 import *
+from map_from_data import *
 from time import *
 from math import exp
 import decimal
@@ -158,7 +158,7 @@ def mouseover():
                     next_road_id = None if veh.next_road == None else veh.next_road.id
                     leader_index = None if veh.leader == None or veh.leader.veh_type == "stop" else vehicles.index(veh.leader)
                     leader_index = "stop" if veh.leader != None and veh.leader.veh_type == "stop" else leader_index
-                    txt = txt + "Vehicle {} \n(speed: {:.2f}, v0: {:.2f}, d_to_cross: {:.2f}, going to: {}, leader: {}, decision: {}, angle: {:.2f})".format(vehicles.index(veh), veh.v*3.6, veh.v0*3.6, veh.d_to_cross(), next_road_id, leader_index, veh.decision, veh.angle)
+                    txt = txt + "Vehicle {} \n(speed: {:.2f}, v0: {:.2f}, d_to_cross: {:.2f}, going to: {}, leader: {}, decision: {})".format(vehicles.index(veh), veh.v*3.6, veh.v0*3.6, veh.d_to_cross(), next_road_id, leader_index, veh.decision)
                     break
     gui.map.itemconfigure(tag, text=txt)
     gui.map.coords(tag, x+15, y+15)

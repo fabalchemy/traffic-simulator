@@ -13,9 +13,9 @@ def copy_list(a):
 default_dispatch_3=[[0 , 1 , 0],
                     [0 , 0,  1],
                     [0, 1 , 0]]
-default_dispatch_3=[[0   , 0.2 , 0.8],
-                    [0.5 , 0   , 0.5],
-                    [0.8 , 0.2 , 0  ]]
+# default_dispatch_3=[[0   , 0.2 , 0.8],
+#                     [0.5 , 0   , 0.5],
+#                     [0.8 , 0.2 , 0  ]]
 
 default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
                     [0.4 , 0   , 0.4 , 0.2 ],
@@ -27,7 +27,7 @@ ecart = e = 200
 # coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
 coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150)]
 
-crosses.append(Cross((150,150)))
+crosses.append(Cross((150,150), traffic_lights=False))
 
 for coords in coords_gen:
     gen = GeneratorCross(coords = coords, period = 4)

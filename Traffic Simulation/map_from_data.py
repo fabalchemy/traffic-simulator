@@ -36,7 +36,7 @@ for line in lines:
         if line != "\n":
             x,y = line.split()
             x,y = float(x), float(y)
-            gen = GeneratorCross(coords = (x,y), period = 5)
+            gen = GeneratorCross(coords = (x,y), period = 6)
             generators.append(gen)
             crosses.append(gen)
         else:

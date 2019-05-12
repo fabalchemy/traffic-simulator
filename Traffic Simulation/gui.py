@@ -179,7 +179,7 @@ class Map(tk.Canvas):
         for cross in crosses:
             if len(cross.roads) > 2 and cross.traffic_lights_enabled:
                 for i in range(len(cross.roads)):
-                    if (i)%2 + cross.priority == 1:
+                    if cross.priority != -1 and (i)%2 + cross.priority == 1:
                         color = "green"
                     else:
                         color = "red"
@@ -197,7 +197,7 @@ class Container(tk.Frame):
         tk.Frame.__init__(self, root)
         # Initialize the canvas representating the map
         self.map = Map(self, W, H, BACKGROUND_COLOR)
-        self.map.create_rectangle(-50,-50,W-1, H-1, tags="container")
+        # self.map.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Setting up scrollbars to be able to move the map in the window
         self.xsb = tk.Scrollbar(self, orient="horizontal", command=self.map.xview)

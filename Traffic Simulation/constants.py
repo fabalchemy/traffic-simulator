@@ -16,6 +16,6 @@ ROAD_COLOR = "#ffffff"
 ROAD_OUTLINE_COLOR = "#ffffff"
 
 # CONSTANTS
-PRIORITY_GAP = {"car" : 1.5, "truck": 4, "stop":0}
-TIME_TO_CROSS = {"right": {"car": 1, "truck":2, "stop":0}, "other":{"car": 2, "truck":4, "stop":0}}
+PRIORITY_GAP = {"car" : 1.5, "truck": 3, "stop":0}
+TIME_TO_CROSS = {"right": {"car": 0.5, "truck":2, "stop":0}, "other":{"car": 2, "truck":4, "stop":0}}
 RAND_GAP = 5 # Bigger this constant is, more random is the generation of vehicles
