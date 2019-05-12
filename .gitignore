@@ -103,3 +103,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 Traffic Simulation (IDM)/results.txt
+Traffic Simulation (IDM)/results0.txt
