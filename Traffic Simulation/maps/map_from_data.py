@@ -26,7 +26,7 @@ default_dispatch_4=[[0   , 0.2, 0.6 , 0.2],
 
 disp = {1: None, 2: None, 3:default_dispatch_3, 4:default_dispatch_4}
 
-file = open("map_data.txt", "r")
+file = open("maps/map_data.txt", "r")
 lines = file.readlines()
 
 state = "generator"

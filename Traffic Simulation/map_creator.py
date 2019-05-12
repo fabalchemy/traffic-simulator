@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from math import cos, sin, atan, sqrt, acos
 
-map_filename = "map0.png"
+map_filename = "maps/map0.png"
 image = Image.open(map_filename)
 
 W, H = image.size
@@ -336,7 +336,7 @@ def selector(event):
 def extract_data():
     print("extracting data")
     scale = 200/91
-    file = open("map_data.txt", "w")
+    file = open("maps/map_data.txt", "w")
     cross_list = []
     road_list = []
     for g in Generator.list:

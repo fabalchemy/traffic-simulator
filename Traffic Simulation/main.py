@@ -1,6 +1,6 @@
 # coding = utf-8
 from simulation import *
-from map_from_data import *
+from maps.map_from_data import *
 from time import *
 from math import exp
 import decimal
