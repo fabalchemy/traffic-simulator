@@ -1,5 +1,5 @@
 # Projet : Simulation du trafic routier
-![Logo](Traffic Simulation/logo_traffic_simulator.gif)
+![Logo](Traffic%20Simulation/logo_traffic_simulator.gif)
 
 
 Projet de fin de classe préparatoire au Cycle Préparatoire de Bordeaux
