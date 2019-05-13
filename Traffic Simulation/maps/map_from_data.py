@@ -1,3 +1,5 @@
+"""Create a map from the map_creator data"""
+
 from simulation import *
 import gui
 

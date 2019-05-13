@@ -9,13 +9,13 @@ dx, dy = 20, 20 # Elementary move for the canvas
 
 
 class Map(tk.Canvas):
+    """Map the show the simulation"""
     def __init__(self, master, width, height, background):
         # Initialize a canvas
         tk.Canvas.__init__(self, master=master, width=width, height=height, background=background)
         self.configure(scrollregion=(-marge, -marge, marge, marge))
         self.configure(xscrollincrement=1)
         self.configure(yscrollincrement=1)
-        self.create_rectangle(-50,-50,W-1, H-1, tags="container")
 
         # Keep track of the current scale to make correct operations when zoomed in or out
         self.current_scale = 1
@@ -32,9 +32,9 @@ class Map(tk.Canvas):
         # Zoom in if the user scrolls up, zoom out otherwise
         factor = 0
         if event.delta > 0 or event.keysym == "Up":
-            factor = 2
+            factor = 2 # zoom in
         elif event.delta < 0 or event.keysym == "Down":
-            factor = .5
+            factor = .5 # zoom out
 
         if factor != 0:
             # Scale every object on the canvas by (factor)
@@ -46,15 +46,18 @@ class Map(tk.Canvas):
             self.configure(scrollregion=(-marge, -marge, marge, marge))
             x,y = self.canvasx(event.x), self.canvasy(event.y)
 
+            # Place the map at the previous position
             self.xview_scroll(int(x*(factor-1)), "units")
             self.yview_scroll(int(y*(factor-1)), "units")
 
     def draw_cross(self, cross_list):
+        """Place the intersections on the map"""
         for cross in cross_list:
             (x,y) = cross.coords
             cross.rep = self.create_oval(x-3, y-3, x+3, y+3, fill=ROAD_COLOR, outline=ROAD_COLOR, tag="cross")
 
     def draw_road(self, road_list):
+        """Place the roads"""
         for road in road_list:
             (l, w) = (road.length, road.width)
             ang = road.angle
@@ -66,8 +69,9 @@ class Map(tk.Canvas):
             road.rep = self.create_polygon(x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, fill=ROAD_COLOR, outline=ROAD_OUTLINE_COLOR, width = 2, tag="road")
 
     def draw_stop(self, road_list):
+        """Create the representation of a traffic light"""
         for road in road_list:
-            orient = -1 #if veh.origin_cross == veh.road.cross1 else -1
+            orient = -1
             cos_angle, sin_angle = orient*road.cos_angle, orient*road.sin_angle
             e = self.current_scale
             (x0,y0) = road.cross1.coords
@@ -84,12 +88,9 @@ class Map(tk.Canvas):
             points = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
             road.stop1.rep = self.create_polygon(points, fill=ROAD_COLOR)
 
-            orient = 1 #if veh.origin_cross == veh.road.cross1 else -1
+            orient = 1
             cos_angle, sin_angle = orient*road.cos_angle, orient*road.sin_angle
-            e = self.current_scale
             (x0,y0) = road.cross2.coords
-            w = road.width
-            l = road.length
 
             dx = sin_angle*w/4 *e
             dy = - cos_angle*w/4 *e
@@ -104,6 +105,7 @@ class Map(tk.Canvas):
 
 
     def draw_vehicle(self, vehicle_list):
+        """Draw the vehicles at the correct position"""
         for veh in vehicle_list:
             orient = 1 if veh.origin_cross == veh.road.cross1 else -1
             cos_angle, sin_angle = orient*veh.road.cos_angle, orient*veh.road.sin_angle
@@ -128,6 +130,7 @@ class Map(tk.Canvas):
             points_car = (x+dx, y+dy, x-dx, y-dy, x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy)
             points_brake = (x+dxb-dx, y+dyb-dy, x+dxb+dx, y+dyb+dy, x+dxb_brake+dx, y+dyb_brake+dy, x+dxb_brake-dx, y+dyb_brake-dy)
 
+            # Update the blinker position
             points_blinker = (-100,-100,-100,-100)
             if veh.road.length - veh.x < 50:
                 rad = 0.4 * e
@@ -138,6 +141,7 @@ class Map(tk.Canvas):
                 else:
                     points_blinker = (-100,-100,-100,-100)
 
+            # Get a color according to the speed
             color = get_color_from_gradient(veh.v/veh.road.speed_limit)
 
             if veh.rep == None and veh.brake_rep == None and veh.blinker_rep == None:
@@ -163,10 +167,12 @@ class Map(tk.Canvas):
                 veh.blinker_state += 1
 
     def draw_leadership(self, vehicle_list):
-        map.delete("leadership")
+        """Draw an arrow between a vehicle and its leader"""
+        map.delete("leadership") # clean everything
         for veh in vehicle_list:
             if veh.leader != None:
                 if veh.leader.rep != None:
+                    # get the coordinates of the vehicle and its leader
                     leader_coords = self.coords(veh.leader.rep)
                     follower_coords = self.coords(veh.rep)
                     x_l, y_l = (leader_coords[4] + leader_coords[6])/2, (leader_coords[5] + leader_coords[7])/2
@@ -176,6 +182,7 @@ class Map(tk.Canvas):
                     map.create_line(x_l, y_l, x_f, y_f, fill=veh.leadership_color, width=1, tag="leadership", arrow = tk.FIRST, arrowshape=(d1, d2, d3))
 
     def draw_traffic_lights(self, crosses):
+        """Update the color of traffic lights according to their state"""
         for cross in crosses:
             if len(cross.roads) > 2 and cross.traffic_lights_enabled:
                 for i in range(len(cross.roads)):
@@ -220,27 +227,29 @@ class Controls(tk.Frame):
         self.logo = tk.PhotoImage(file="logo_traffic_simulator.gif", format="gif")
         tk.Label(self, image=self.logo).grid(row=0, column=0)
 
-
+        # Time management
         self.time_mgmt = tk.LabelFrame(self, text="Time managment", padx=10, pady= 10)
         self.time_mgmt.grid(row=1,column=0, sticky="new")
-
         self.time_str = tk.StringVar()
         self.time_str.set("Current time: 0 s.")
         tk.Label(master = self.time_mgmt, textvariable = self.time_str).pack()
+        # Simulation speed controler
         self.speed = tk.Scale(self.time_mgmt, label="Simulation speed", from_=0, to=10, resolution=0.1, orient=tk.HORIZONTAL, length=200)
         self.speed.set(int(1))
         self.speed.pack(fill="both", expand="yes")
+        # Play/Pause buttons
         self.play = tk.BooleanVar()
         self.play.set(True)
         self.play_b = tk.Radiobutton(self.time_mgmt, text="Play", variable=self.play, value=True)
         self.pause_b = tk.Radiobutton(self.time_mgmt, text="Pause", variable=self.play, value=False)
         self.play_b.pack(side=tk.LEFT)
         self.pause_b.pack(side=tk.LEFT)
+        # Speed buttons
         tk.Button(self.time_mgmt, text=">>", command = lambda : self.change_speed(1)).pack(side=tk.RIGHT)
         tk.Button(self.time_mgmt, text="x1", command = lambda : self.speed.set(1)).pack(side=tk.RIGHT)
         tk.Button(self.time_mgmt, text="<<", command = lambda : self.change_speed(-1)).pack(side=tk.RIGHT)
 
-
+        # Information section
         self.information = tk.LabelFrame(self, text="Information", padx=10, pady=10)
         self.information.grid(row=2,column=0, sticky="new")
         tk.Label(master = self.information, text = "Number of vehicles: ").grid(row = 0, column = 0)
@@ -252,6 +261,7 @@ class Controls(tk.Frame):
         tk.Label(master = self.information, text="Average speed: ").grid(row = 1, column = 0)
         tk.Label(master = self.information, textvariable = self.avg_speed).grid(row = 1, column = 1)
 
+        # Settings section
         self.settings = tk.LabelFrame(self, text="Settings", padx=10, pady=10)
         self.settings.grid(row=3,column=0, sticky="new")
 
@@ -264,6 +274,7 @@ class Controls(tk.Frame):
         self.leadership_false.pack(side=tk.LEFT)
 
     def change_speed(self, value):
+        """Function to update the simulation speed with the keyboard"""
         speed = int(self.speed.get() + value)
         if speed >= 0 & speed <= 10:
             self.speed.set(speed)
@@ -271,27 +282,27 @@ class Controls(tk.Frame):
 
 def keyboard_listener(event):
     if event.char == " ":
+        # Change the state to play or pause when pressing the space key
         controls.play.set(False) if controls.play.get() else controls.play.set(True)
 
-    elif event.char.lower() == "f":
+    # Change the speed
+    elif event.char.lower() == "f": # faster
         controls.change_speed(1)
-    elif event.char.lower() == "d":
+    elif event.char.lower() == "d": # normal
         controls.speed.set(1)
-    elif event.char.lower() == "s":
+    elif event.char.lower() == "s": # slower
         controls.change_speed(-1)
 
+    # Move the map
     elif event.keysym == "Right":
         map.scan_mark(0,0)
         map.scan_dragto(-dx,0)
-
     elif event.keysym == "Left":
         map.scan_mark(0,0)
         map.scan_dragto(dx,0)
-
     elif event.keysym == "Up":
         map.scan_mark(0,0)
         map.scan_dragto(0,dy)
-
     elif event.keysym == "Down":
         map.scan_mark(0,0)
         map.scan_dragto(0,-dy)

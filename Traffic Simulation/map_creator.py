@@ -144,9 +144,6 @@ class Controls(tk.Frame):
         self.generate_b = tk.Button(self.creation_menu, text="Extract data !", command=extract_data)
         self.generate_b.grid(row=2, column=1)
 
-
-
-
         self.information = tk.LabelFrame(self, text="Information", padx=5, pady=5)
         self.information.grid(row=1, column=0, sticky="new")
 
@@ -162,19 +159,15 @@ class Controls(tk.Frame):
 def keyboard_listener(event):
     if event.char == " ":
         controls.build_type.set(False) if controls.build_type.get() else controls.build_type.set(True)
-
     elif event.keysym == "Right":
         map.scan_mark(0,0)
         map.scan_dragto(-dx,0)
-
     elif event.keysym == "Left":
         map.scan_mark(0,0)
         map.scan_dragto(dx,0)
-
     elif event.keysym == "Up":
         map.scan_mark(0,0)
         map.scan_dragto(0,dy)
-
     elif event.keysym == "Down":
         map.scan_mark(0,0)
         map.scan_dragto(0,-dy)
@@ -215,6 +208,7 @@ real_cross_priority = None
 selected_roads = []
 
 def selector(event):
+    """Take the correct action according to the user input"""
     global cross_for_priority, real_cross_priority, selected_roads
     x,y = map.canvasx(event.x), map.canvasy(event.y)
     s = map.current_scale
@@ -370,7 +364,6 @@ map.bind("<Button-3>", map.scroll_start)
 map.bind("<B3-Motion>", map.scroll_move)
 map.bind("<MouseWheel>", map.zoom)
 root.bind("<Control-Key>", map.zoom)
-
 map.bind("<Button-1>", selector)
 
 root.mainloop()

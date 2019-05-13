@@ -28,16 +28,19 @@ class Road:
         self.cross2 = cross2
         self.speed_limit = speed_limit
         self.id = id
-        self.rep = None
+        self.rep = None # Tkinter object index
 
+        # Compute the angle between the road and the horizontal axis
         x1,y1 = cross1.coords
         x2,y2 = cross2.coords
         self.angle = angle(x2-x1, y2-y1)
         self.cos_angle = cos(self.angle)
         self.sin_angle = sin(self.angle)
+        # Set the geometry of the road
         self.length = float(((x2-x1)**2 + (y2-y1)**2)**0.5)
         self.width = 6
 
+        # Fake vehicles representing a stop sign at the end of the road
         self.stop1 = Vehicle(self, cross1, vehicle_type="stop")
         self.stop1.v = 0
         self.stop1.x = self.length - 1
@@ -45,9 +48,11 @@ class Road:
         self.stop2.v = 0
         self.stop2.x = self.length - 1
 
+        # Inform the connected crosses
         cross1.add_road(self)
         cross2.add_road(self)
 
+        # Lists containing the vehicles
         self.vehicle_list_12 = list()
         self.vehicle_list_21 = list()
 
@@ -66,7 +71,6 @@ class Road:
             print("ROAD = {}, ROAD LENGTH = {}, RECEIVED ABSCISSA = {}".format(self.id,self.length,x))
             raise ValueError("Incoming abscissa is too high")
 
-        veh.changed_road = True
         veh.decision = False
         veh.change_leader(self.last_vehicle(origin_cross))
 
@@ -79,7 +83,6 @@ class Road:
             veh.destination_cross = self.cross1
 
         veh.x = x
-        veh.dx = 0
         veh.last_road = veh.road
         veh.road = self
         veh.origin_cross = origin_cross
@@ -89,6 +92,8 @@ class Road:
         # Choose the next road
         veh.next_road = veh.destination_cross.choose_direction(self)
 
+
+        # Update the vehicle direction
         if veh.next_road != None:
             nb_roads = len(veh.destination_cross.roads)
             if nb_roads == 2 or veh.road in veh.destination_cross.priority_axis and veh.next_road in veh.destination_cross.priority_axis:
@@ -103,9 +108,7 @@ class Road:
         else:
             veh.direction = None
 
-        # for follower in veh.followers:
-        #     follower.decision = False
-
+        # Tell the follower that won't go the same direction we are gone
         for follower in veh.followers:
             if follower.next_road != veh.road:
                 follower.decision = False
@@ -119,7 +122,7 @@ class Road:
             if type(veh) is not Vehicle:
                 raise notVehicleError
 
-            # Change road length when turning right
+            # Change road length when turning right (graphic alteration)
             if veh.direction == "right":
                 length = self.length - veh.length/2
                 add = veh.length
@@ -128,29 +131,26 @@ class Road:
                 add = 0
 
             if veh.x >= length:
-                if veh in self.vehicle_list_12:
-                    if type(destination_cross) is GeneratorCross:
+                if veh in self.vehicle_list_12: # the vehicle is going to cross2
+                    if type(destination_cross) is GeneratorCross: # end of the map
                         del self.vehicle_list_12[0]
                         veh.destroy()
                         # Update follower's leader to None
                         if len(self.vehicle_list_12) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
-                    else:
+                    else: # go to the next road
                         destination_cross.transfer_vehicle(self.vehicle_list_12.pop(0), veh.next_road, veh.x - self.length +add)
-                        # if len(self.vehicle_list_12)>0:
-                        #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
-                elif veh in self.vehicle_list_21:
-                    if type(destination_cross) is GeneratorCross:
+
+                elif veh in self.vehicle_list_21: # the vehicle is going to cross1
+                    if type(destination_cross) is GeneratorCross: # end of the map
                         del self.vehicle_list_21[0]
                         veh.destroy()
                         # Update follower's leader to None
                         if len(self.vehicle_list_21) > 0:
                             self.first_vehicle(destination_cross).change_leader(None)
-                    else:
+                    else: # go to the next road
                         destination_cross.transfer_vehicle(self.vehicle_list_21.pop(0), veh.next_road, veh.x - self.length +add)
-                        # if len(self.vehicle_list_21)>0:
-                        #     destination_cross.new_leader(veh) # Alert vehicles arrving next to it that it's their new leader
 
                 else:
                     raise ValueError("Vehicle not on this road")
@@ -183,10 +183,10 @@ class Road:
 
 
 class Cross:
-    """Class modelizing a cross"""
+    """Class modelizing a cross at coords (x,y), with or without traffic_lights"""
 
     def __init__(self, coords, id=None, traffic_lights=True):
-        """Generate a Cross at coords (x,y)"""
+        """Generate a Cross"""
 
         if not(type(coords) is tuple and len(coords) == 2 and type(coords[0]) in (int,float)
             and type(coords[1]) in (int,float)):
@@ -211,7 +211,7 @@ class Cross:
         if len(self.roads) < 4:
             self.roads.append(road)
         else:
-            print("Cross ID: ",self.id)
+            print("Cross ID: ", self.id)
             raise TooManyRoads
 
     def define_priority_axis(self, axis):
@@ -225,12 +225,13 @@ class Cross:
         self.priority_axis = axis
 
     def sort_roads(self):
-        temp_list = []
+        """Sort the connected roads according to their angle"""
         # Put every road in temp_list with the correct angle
+        temp_list = []
         for road in self.roads:
-            if road.cross1 == self:
+            if road.cross1 == self: # we can use the angle directly
                 temp_list.append((road, road.angle))
-            else:
+            else: # the angle is wrong
                 angle = road.angle % (2*3.1415) - 3.1415
                 temp_list.append((road, angle))
 
@@ -245,7 +246,7 @@ class Cross:
                 self.roads.append(self.roads.pop(0))
 
     def transfer_vehicle(self, vehicle, next_road, x=0):
-        """Put vehicle on next_road at x"""
+        """Put vehicle on next_road at the abscissa x"""
         if type(vehicle) is not Vehicle:
             raise NotVehicleError
         if next_road not in self.roads:
@@ -261,14 +262,15 @@ class Cross:
         if origin_road not in self.roads:
             raise NotLinkedRoad
 
-        if type(self) is GeneratorCross:
+        if type(self) is GeneratorCross: # end of the map
             return None
-        if len(self.roads) == 2:
+        if len(self.roads) == 2: # can only go ahead
             if origin_road == self.roads[0]:
                 return self.roads[1]
             else:
                 return self.roads[0]
 
+        # choose a road with the dispatch matrix
         rand = 0
         while rand == 0:
             rand = random()
@@ -279,7 +281,7 @@ class Cross:
 
     def set_dispatch(self, dispatch):
         """Set the dispatch matrix of the cross,
-        converting a probability matrix into a cumulated frequencies matrix"""
+        converting a probability matrix into a cumulated probability matrix"""
         if type(dispatch) is not list:
             raise TypeError("dispatch must be list type")
 
@@ -295,7 +297,7 @@ class Cross:
             if dispatch[road][road] != 0:
                 raise ValueError("Vehicles cannot turn back at a cross: dispatch[road i][road i] != 0.")
 
-
+        # Convert the matrix to cumulated probabilities
         for i in range(len(dispatch)):
             for j in range(1,len(dispatch)):
                 dispatch[i][j] += dispatch[i][j-1]
@@ -305,32 +307,38 @@ class Cross:
         self.dispatch = dispatch
 
     def get_intentions(self):
+        """Intersection management function
+
+        For a vehicle, according to its direction and its priority
+        check on the other roads if it can cross the intersection,
+        verifying left, right and ahead the arriving vehicles
+        """
         # Ensure that a vehicle has a unique fake-follower
-        # if len(self.roads) > 2:
-        #     last1 = self.roads[0].last_vehicle(self)
-        #     last2 = self.roads[2].last_vehicle(self)
-        #     if last1 != None:
-        #         nb_followers = 0
-        #         for fol in last1.followers:
-        #             if fol.road != last1.road and fol.road != last1.last_road:
-        #                 nb_followers += 1
-        #         if nb_followers > 1:
-        #             for fol in last1.followers:
-        #                 if fol.road != last1.road:
-        #                     fol.stop()
-        #                     fol.decision = False
-        #                     break
-        #     if last2 != None:
-        #         nb_followers = 0
-        #         for fol in last2.followers:
-        #             if fol.road != last2.road and fol.road != last2.last_road:
-        #                 nb_followers += 1
-        #         if nb_followers > 1:
-        #             for fol in last2.followers:
-        #                 if fol.road != last2.road:
-        #                     fol.stop()
-        #                     fol.decision = False
-        #                     break
+        if len(self.roads) > 2:
+            last1 = self.roads[0].last_vehicle(self)
+            last2 = self.roads[2].last_vehicle(self)
+            if last1 != None:
+                nb_followers = 0
+                for fol in last1.followers:
+                    if fol.road != last1.road and fol.road != last1.last_road:
+                        nb_followers += 1
+                if nb_followers > 1:
+                    for fol in last1.followers:
+                        if fol.road != last1.road:
+                            fol.stop()
+                            fol.decision = False
+                            break
+            if last2 != None:
+                nb_followers = 0
+                for fol in last2.followers:
+                    if fol.road != last2.road and fol.road != last2.last_road:
+                        nb_followers += 1
+                if nb_followers > 1:
+                    for fol in last2.followers:
+                        if fol.road != last2.road:
+                            fol.stop()
+                            fol.decision = False
+                            break
 
         # Priority vehicles first
         if len(self.roads) >= 3:
@@ -372,7 +380,7 @@ class Cross:
                 else:
                     if not veh1.decision:
                         if veh1.direction == "left":
-                            if veh2.time_to_cross() < veh1.time_to_cross() + PRIORITY_GAP[veh1.veh_type]:
+                            if veh2.time_to_cross() < veh1.time_to_cross() + (PRIORITY_GAP[veh1.veh_type]+PRIORITY_GAP[veh2.veh_type])/2:
                                 # not enough time to cross the road before the other vehicle
                                 veh1.stop()
                                 veh2.find_leader()
@@ -387,7 +395,7 @@ class Cross:
 
                     if not veh2.decision:
                         if veh2.direction == "left":
-                            if veh1.time_to_cross() < veh2.time_to_cross() + PRIORITY_GAP[veh2.veh_type]:
+                            if veh1.time_to_cross() < veh2.time_to_cross() + (PRIORITY_GAP[veh2.veh_type]+PRIORITY_GAP[veh1.veh_type])/2:
                                 veh2.stop()
                                 veh1.find_leader()
                             else:
@@ -473,6 +481,7 @@ class Cross:
                         veh.find_leader()
 
     def updateTrafficLights(self, t):
+        """Check the time and update the traffic lights according to the progress of the cycle"""
         if len(self.roads) > 2 and self.traffic_lights_enabled:
             # if the cross should be regulated
             for i in range(len(self.traffic_lights[0])):
@@ -501,16 +510,14 @@ class Cross:
                                         for follower in veh.followers:
                                             follower.find_leader()
                                             follower.decision = False
-                            # elif len(vehicle_list) > 0:
-                            #     veh = vehicle_list[0]
-                            #     veh.find_leader()
-                            #     veh.decision = False
 
+                        # else STOP!
                         elif len(vehicle_list) == 0:
                             if self == self.roads[road_index].cross1:
                                 vehicle_list.append(self.roads[road_index].stop1)
                             else:
                                 vehicle_list.append(self.roads[road_index].stop2)
+
                         elif vehicle_list[0].veh_type != "stop":
                             for veh in vehicle_list:
                                 if veh.time_to_cross() > PRIORITY_GAP[veh.veh_type] or veh.v < 1.5:
@@ -520,7 +527,7 @@ class Cross:
 
 
 class GeneratorCross(Cross):
-    """Generator cross, at the edges of the map, to add or delete vehicles on/off the map"""
+    """Generator cross, at the edges of the map, to add on the map or delete them"""
 
     def __init__(self, coords, period):
         """coords : (x,y) coordinates
@@ -544,12 +551,14 @@ class GeneratorCross(Cross):
         road = self.roads[0]
         vehicle_ahead = road.last_vehicle(self)
 
+        # Compute next period for the generation
         if self.rand_period  == None:
             self.rand_period = randint(-RAND_GAP, RAND_GAP)
             self.next_period = self.period + self.rand_period
 
+        # if it is time to generate
         if (t - self.last_t) >= self.next_period :
-            veh_type = "car" if random() < 0.9 else "truck"
+            veh_type = "car" if random() < 0.9 else "truck" # decide wether we generate a car or a truck
             if (vehicle_ahead == None or vehicle_ahead.x > (self.roads[0].speed_limit**2)/(2*Vehicle.VEH_B_MAX[veh_type]) + vehicle_ahead.s0 + (vehicle_ahead.length + Vehicle.VEH_LENGTH[veh_type])/2):
                 self.last_t = t
 
@@ -599,7 +608,6 @@ class Vehicle:
         self.followers = []
         self.leadership_color = random_color()
         self.x = 0 # Position of the vehicle on the road
-        self.dx = 0
         self.v = 0 # Speed of the vehicle
 
         self.T = T
@@ -611,7 +619,6 @@ class Vehicle:
         self.slow_down = 0
         self.angle = 0
 
-        self.changed_road = True
         self.rep = None # Index for graphic representation
         self.brake_rep = None
         self.last_a = 0
@@ -624,14 +631,14 @@ class Vehicle:
         if vehicle_type == "car": # It's a car
             self.a = a # Acceleration
             self.b_max = Vehicle.VEH_B_MAX[vehicle_type] # Maximum vehicle deceleration (in case of danger ahead)
-            self.length = Vehicle.VEH_LENGTH["car"]
+            self.length = Vehicle.VEH_LENGTH[vehicle_type]
             self.width = 2
         elif vehicle_type == "truck" : # It's a truck
             self.a = 1
             self.b_max = Vehicle.VEH_B_MAX[vehicle_type]
-            self.length = Vehicle.VEH_LENGTH["truck"]
+            self.length = Vehicle.VEH_LENGTH[vehicle_type]
             self.width = 2.5
-        elif vehicle_type == "stop":
+        elif vehicle_type == "stop": # Modelize a stop line on a crossroad
             self.a=0
             self.b_max = Vehicle.VEH_B_MAX["car"] # Maximum vehicle deceleration (in case of danger ahead)
             self.length = Vehicle.VEH_LENGTH["car"]
@@ -639,11 +646,10 @@ class Vehicle:
         else:
             raise TypeError("Non existing type of vehicle, car or truck?")
 
-        # TODO: Implement some variation for v0 speed (pushy or safe driver)
         self.v0 = road.speed_limit # v0 = desired speed (generally the speed limit)
 
     def turn_speed(self):
-        """Give the optimal speed for changing road
+        """Give the optimal speed for taking the bend when changing of road
         f(0) = 0, f(PI/2) = 15/50, f(PI) = 1"""
         if self.next_road != None:
             if self.destination_cross == self.road.cross1:
@@ -666,7 +672,6 @@ class Vehicle:
             elif angle > pi:
                  angle = 2*pi - angle
             self.angle = angle
-            # self.v0 = log(1+(e-1)*angle/pi) * self.road.speed_limit
             self.v0 = (0.08*angle*angle + 0.06*angle) * self.road.speed_limit
 
     def destroy(self):
@@ -678,25 +683,28 @@ class Vehicle:
         vehicles.remove(self)
 
     def stop(self):
+        """Give the correct stop leader according to the road and the direction"""
         if self.destination_cross == self.road.cross1:
             self.change_leader(self.road.stop1)
         else:
             self.change_leader(self.road.stop2)
 
     def time_to_cross(self):
+        """Give the expected time of arrival on the cross"""
         if self.v > 0.1 :
             return self.d_to_cross() / self.v
-        else:
+        else: # vehicle is stopped
             if self.direction == "right":
                 return TIME_TO_CROSS["right"][self.veh_type]
             else:
                 return TIME_TO_CROSS["other"][self.veh_type]
 
     def d_to_cross(self):
+        """Distance between the vehicle and the cross"""
         return self.road.length - self.x
 
     def change_leader(self, vehicle):
-        """To change the leader of a vehicle, from outside the class"""
+        """Change the leader of a vehicle"""
         if not (isinstance(vehicle, Vehicle) or vehicle == None):
             print(type(vehicle))
             raise NotVehicleError
@@ -714,6 +722,7 @@ class Vehicle:
                 raise ValueError("The vehicle is not a follower")
 
     def find_leader(self):
+        """Find a leader on the next_road, if possible"""
         if self.next_road != None:
             leader = self.next_road.last_vehicle(self.destination_cross)
             self.change_leader(leader)
@@ -727,12 +736,11 @@ class Vehicle:
             if self.leader.road == self.road:
                 if self.leader.veh_type != "stop":
                     # "standard" leader
-                    if self.x < self.length:
+                    if self.x < self.length: # too close of the end of the road
                         return max(0.01, self.leader.x - self.x - (self.leader.length + self.length)/2)
                     else:
                         return self.leader.x - self.x - (self.leader.length + self.length)/2
-                else :
-                    # "stop" leader
+                else : # "stop" leader
                     return max(0.00001, self.leader.x - self.x - (self.leader.length + self.length)/2)
             elif self.leader.road == self.next_road:
                 return max(0.00001, self.d_to_cross() + self.leader.x - (self.leader.length + self.length)/2)
@@ -740,7 +748,7 @@ class Vehicle:
                 # "fake" leader: self follows a projection
                 return max(0.00001,self.d_to_cross() - self.leader.d_to_cross() - (self.leader.length + self.length)/2)
             else:
-                return 250
+                return 250 # arbitrary constant
 
     def speed_of_leader(self):
         """Return the speed of the leader, if it exists
@@ -767,7 +775,7 @@ class Vehicle:
         return (self.s0 + max(0, v*self.T + v*delta_v/(2*(self.a*self.b)**0.5))) / self.spacing_with_leader()
 
     def acceleration_IIDM(self):
-        """Return the global acceleration"""
+        """Return the global acceleration, with the Improved Intelligent Driver Model"""
         v = self.v
         a = self.a
         z = self.z()
@@ -787,4 +795,5 @@ class Vehicle:
         return self.last_a
 
     def acceleration_IDM(self):
+        """Return the acceleration with the Intelligent Driver Model"""
         return max(-self.b_max,self.a * (1 - (self.v/self.v0)**self.delta - ((self.s0 + max(0, self.v * self.T + (self.v * (self.v-self.speed_of_leader())/2*(self.a*self.b)**0.5)))/self.spacing_with_leader())**2))

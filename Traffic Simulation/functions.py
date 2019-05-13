@@ -12,6 +12,7 @@ def angle(x,y):
 
 
 def random_color():
+    """Get a random color"""
     r = lambda: random.randint(50,255)
     return "#{:02x}{:02x}{:02x}".format(r(), r(), r())
 
@@ -35,14 +36,3 @@ def get_color_from_gradient(value, gradient = GRADIENT_1):
             factor = (value-gradient[i-1][0])/(gradient[i][0]-gradient[i-1][0])
             color = [int((1-factor)*color1[i] + factor*color2[i]) for i in [0, 1, 2]]
             return RGB_to_hex(color)
-
-# # print(get_color_from_gradient(0.71))
-# from tkinter import *
-# win = Tk()
-# canvas = Canvas(win)
-# canvas.pack()
-# for i in range(100):
-#     color = get_color_from_gradient(i/100)
-#     canvas.create_oval(i*2-10, i*2-10, i*2+10, i*2+10, fill=color, outline=color)
-#
-# win.mainloop()

@@ -1,3 +1,5 @@
+"""Map of a 4-roads intersection"""
+
 from simulation import *
 import gui
 import random

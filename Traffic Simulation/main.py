@@ -1,5 +1,6 @@
 # coding = utf-8
 from simulation import *
+# Change next line with the map you want to use
 from maps.map_from_data import *
 from time import *
 from math import exp
@@ -17,6 +18,10 @@ average_speed = 0
 # file = open("results.txt", "w")
 
 def next_steps(dt_d, steps):
+    """Update all the simulation :
+    - vehicle acceleration, velocity and position
+    - vehicle crossing order for each cross according to the priority
+    - traffic light state """
     T = perf_counter()
     global t
     global average_speed
@@ -42,7 +47,6 @@ def next_steps(dt_d, steps):
         for veh in vehicles:
             try:
                 a = veh.acceleration_IIDM()
-                veh.dx += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.x += veh.v*dt + max(0, 0.5*a*dt*dt)
                 veh.v = max(0, veh.v + a*dt)
                 average_speed += veh.v
@@ -61,11 +65,6 @@ def next_steps(dt_d, steps):
                 if veh.leader != None and veh.leader.veh_type != "stop" and veh.leader.road == veh.road and veh.destination_cross != veh.leader.destination_cross:
                     veh.decision = False
                     veh.find_leader()
-
-                # if (veh.leader != None and (veh.leader.road != veh.road and veh.leader.road != veh.next_road
-                #     and veh.destination_cross != veh.leader.destination_cross)):
-                #     # veh.decision = False
-                #     veh.find_leader()
 
             except:
                 next_road_id = None if veh.next_road == None else veh.next_road.id
@@ -86,6 +85,7 @@ def next_steps(dt_d, steps):
             road.outgoing_veh(road.first_vehicle(road.cross2))
 
         for veh in deleted_vehicles:
+            # Delete the vehicles that left the map
             gui.map.delete(veh.rep)
             gui.map.delete(veh.brake_rep)
         deleted_vehicles.clear()
@@ -96,6 +96,10 @@ def next_steps(dt_d, steps):
     delay = perf_counter() - T
 
 def update():
+    """Update the graphic interface :
+    Compute the correct number of simulation steps
+    Update the position of the vehicles, the traffic lights and the leadership arrows"""
+
     global delay
     global average_speed
     T = perf_counter()
@@ -125,6 +129,7 @@ def update():
 mouse_x, mouse_y = 0, 0
 
 def click(event):
+    """Slow down a vehicle when clicking on it"""
     x, y = gui.map.canvasx(event.x), gui.map.canvasy(event.y)
     objects = gui.map.find_overlapping(x,y,x,y)
     for obj in objects:
@@ -137,6 +142,7 @@ def click(event):
                     break
 
 def mouseover():
+    """Update the text to give information to the user"""
     x, y = gui.map.canvasx(mouse_x), gui.map.canvasy(mouse_y)
     objects = gui.map.find_overlapping(x,y,x,y)
     txt = ""

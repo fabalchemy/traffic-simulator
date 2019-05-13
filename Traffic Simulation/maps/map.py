@@ -1,3 +1,5 @@
+"""Map of a 3-roads intersection"""
+
 from simulation import *
 import gui
 import random
@@ -9,13 +11,13 @@ def copy_list(a):
         for j in range(len(a[i])):
             b[i].append(a[i][j])
     return b
-#
-default_dispatch_3=[[0 , 1 , 0],
-                    [0 , 0,  1],
-                    [0, 1 , 0]]
-# default_dispatch_3=[[0   , 0.2 , 0.8],
-#                     [0.5 , 0   , 0.5],
-#                     [0.8 , 0.2 , 0  ]]
+
+# default_dispatch_3=[[0 , 1 , 0],
+#                     [0 , 0,  1],
+#                     [0, 1 , 0]]
+default_dispatch_3=[[0   , 0.2 , 0.8],
+                    [0.5 , 0   , 0.5],
+                    [0.8 , 0.2 , 0  ]]
 
 default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
                     [0.4 , 0   , 0.4 , 0.2 ],

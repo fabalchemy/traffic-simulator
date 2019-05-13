@@ -1,3 +1,5 @@
+"""Map of a straight road"""
+
 from simulation import *
 import gui
 import random
@@ -23,7 +25,7 @@ default_dispatch_4=[[0   , 0.15, 0.7 , 0.15],
                     [0.4 , 0.2 , 0.4 , 0   ]]
 disp = {3:default_dispatch_3, 4:default_dispatch_4}
 
-ecart = e = 200
+ecart = e = 400
 # coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150), (150+e, 150)]
 # coords_gen = [(150, 150-e), (150, 150+e), (150-e, 150)]
 coords_gen = [(150-e, 150), (150+e, 150)]
